@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500&display=swap');
+
+/* ── Landing page scope: override global design tokens ── */
+.landing-page {
+  --lp-background: 201 100% 13%;
+  --lp-foreground: 0 0% 100%;
+  --lp-muted-foreground: 240 4% 66%;
+
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  color-scheme: dark;
+  font-family: 'Inter', sans-serif;
+  background-color: hsl(var(--lp-background));
+  color: hsl(var(--lp-foreground));
+}
+
+/* ── Header ── */
+.lp-header {
+  position: relative;
+  z-index: 10;
+  max-width: 80rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+}
+
+.lp-brand {
+  display: flex;
+  align-items: center;
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.875rem;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  color: hsl(var(--lp-foreground));
+  text-decoration: none;
+}
+
+.lp-nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.lp-nav-item {
+  font-size: 0.875rem;
+  color: hsl(var(--lp-muted-foreground));
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.lp-nav-item:hover,
+.lp-nav-item.active {
+  color: hsl(var(--lp-foreground));
+  transform: translateY(-1px);
+}
+
+/* ── Liquid Glass Button ── */
+.lp-glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  color: hsl(var(--lp-foreground));
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+
+.lp-glass-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.lp-glass-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0.15) 80%,
+    rgba(255, 255, 255, 0.45) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.lp-glass-btn--nav {
+  padding: 0.625rem 1.5rem;
+  font-size: 0.875rem;
+}
+
+.lp-glass-btn--cta {
+  padding: 1.25rem 3.5rem;
+  font-size: 1rem;
+  margin-top: 3rem;
+}
+
+/* ── Hero wrapper ── */
+.lp-hero {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.lp-hero-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Hero content ── */
+.lp-main {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  min-height: calc(100vh - 96px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8rem 1.5rem 10rem;
+  text-align: center;
+}
+
+.lp-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -2.46px;
+  max-width: 80rem;
+  color: hsl(var(--lp-foreground));
+}
+
+.lp-title em {
+  font-style: normal;
+  color: hsl(var(--lp-muted-foreground));
+}
+
+.lp-description {
+  margin-top: 2rem;
+  max-width: 42rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: hsl(var(--lp-muted-foreground));
+}
+
+/* ── Animations ── */
+@keyframes lp-fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lp-animate-1 {
+  animation: lp-fade-rise 0.8s ease-out both;
+}
+
+.lp-animate-2 {
+  animation: lp-fade-rise 0.8s ease-out 0.2s both;
+}
+
+.lp-animate-3 {
+  animation: lp-fade-rise 0.8s ease-out 0.4s both;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .lp-nav {
+    display: none;
+  }
+
+  .lp-main {
+    padding: 6rem 1rem 6rem;
+  }
+
+  .lp-glass-btn--cta {
+    padding: 1rem 2.5rem;
+  }
+}

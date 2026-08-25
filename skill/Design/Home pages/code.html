@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Home | SkillXchange</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#00201b",
+                    "outline-variant": "#bec9c5",
+                    "on-tertiary": "#ffffff",
+                    "surface": "#f7f9ff",
+                    "surface-container-low": "#f1f4f9",
+                    "surface-bright": "#f7f9ff",
+                    "surface-container-high": "#e5e8ee",
+                    "outline": "#6e7976",
+                    "on-surface": "#181c20",
+                    "on-tertiary-container": "#d8d9da",
+                    "surface-dim": "#d7dadf",
+                    "inverse-on-surface": "#eef1f6",
+                    "tertiary-fixed": "#e1e3e4",
+                    "on-secondary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-background": "#181c20",
+                    "surface-container": "#ebeef3",
+                    "primary-container": "#006b5c",
+                    "inverse-surface": "#2d3135",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e0e3e8",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#001a41",
+                    "primary-fixed": "#9ff2df",
+                    "surface-container-highest": "#e0e3e8",
+                    "on-primary-container": "#95e8d5",
+                    "tertiary-fixed-dim": "#c5c7c8",
+                    "surface-tint": "#006b5c",
+                    "secondary-container": "#0070ea",
+                    "primary-fixed-dim": "#83d6c3",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed": "#191c1d",
+                    "error-container": "#ffdad6",
+                    "tertiary-container": "#5c5f60",
+                    "secondary": "#0059bb",
+                    "on-secondary-fixed-variant": "#004493",
+                    "on-surface-variant": "#3e4946",
+                    "inverse-primary": "#83d6c3",
+                    "on-primary-fixed-variant": "#005045",
+                    "on-tertiary-fixed-variant": "#454748",
+                    "background": "#f7f9ff",
+                    "tertiary": "#454748",
+                    "secondary-fixed-dim": "#adc7ff",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-secondary-container": "#fefcff",
+                    "on-primary": "#ffffff",
+                    "primary": "#005145"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "sm": "8px",
+                    "unit": "4px",
+                    "container-padding": "20px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "gutter": "16px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "label-lg": ["Montserrat"],
+                    "headline-lg": ["Montserrat"],
+                    "body-md": ["Montserrat"],
+                    "headline-md": ["Montserrat"],
+                    "body-sm": ["Montserrat"],
+                    "body-lg": ["Montserrat"],
+                    "headline-sm": ["Montserrat"],
+                    "label-sm": ["Montserrat"]
+            },
+            "fontSize": {
+                    "label-lg": ["14px", {"lineHeight": "1", "letterSpacing": "0.5px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.3px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Montserrat', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .soft-shadow {
+            box-shadow: 0 12px 20px 0 rgba(0, 0, 0, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #bec9c5;
+            border-radius: 10px;
+        }
+        .academic-border-top-green { border-top: 2px solid #005145; }
+        .academic-border-top-blue { border-top: 2px solid #0059bb; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar (Predicted Component) -->
+<aside class="hidden lg:flex flex-col h-screen fixed left-0 top-0 py-md w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-50">
+<div class="px-lg mb-xl">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-primary font-bold">SkillXchange</h1>
+<p class="text-label-sm text-on-surface-variant opacity-70">Empowering Growth</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-xs">
+<!-- Home (Active) -->
+<a class="flex items-center gap-sm bg-primary-container text-on-primary-container rounded-lg px-4 py-3 mx-2 transition-transform duration-200 translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<!-- Mentors -->
+<a class="flex items-center gap-sm text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-label-md text-label-md">Mentors</span>
+</a>
+<!-- Progress -->
+<a class="flex items-center gap-sm text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-label-md text-label-md">Progress</span>
+</a>
+<!-- Profile -->
+<a class="flex items-center gap-sm text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person_edit">person_edit</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+<div class="mt-auto px-2 space-y-1">
+<button class="w-[calc(100%-16px)] mx-2 mb-lg bg-secondary text-on-secondary rounded-lg py-3 font-label-lg text-label-lg shadow-sm hover:brightness-110 transition-all">
+                Start Exchange
+            </button>
+<a class="flex items-center gap-sm text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-sm text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 min-h-screen pb-xl">
+<!-- Welcome Section -->
+<section class="px-container-padding pt-xl pb-lg max-w-7xl mx-auto">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Welcome back, Alex!</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Your intellectual exchange journey is flourishing. Ready for today's session?</p>
+</div>
+<div class="bg-surface-container-lowest p-md rounded-xl soft-shadow border border-outline-variant/20 flex items-center gap-md">
+<div class="relative w-16 h-16">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-high" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-width="6"></circle>
+<circle class="text-primary" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-dasharray="175" stroke-dashoffset="44" stroke-width="6"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-label-lg text-label-lg text-primary">75%</div>
+</div>
+<div>
+<p class="font-label-lg text-label-lg text-on-surface">Daily Progress</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">3 of 4 goals achieved</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Grid Layout -->
+<div class="px-container-padding max-w-7xl mx-auto grid grid-cols-12 gap-lg">
+<!-- Featured Matches (Horizontal Scroll Section) -->
+<section class="col-span-12">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary">swap_horiz</span>
+                        Perfect Reciprocal Matches
+                    </h3>
+<a class="text-primary font-label-lg text-label-lg hover:underline transition-all" href="#">View All</a>
+</div>
+<div class="flex gap-md overflow-x-auto pb-4 custom-scrollbar">
+<!-- Match Card 1 -->
+<div class="min-w-[300px] bg-surface-container-lowest rounded-xl soft-shadow academic-border-top-green p-lg flex flex-col hover:scale-[1.02] transition-transform">
+<div class="flex items-center gap-md mb-md">
+<img class="w-14 h-14 rounded-full object-cover border-2 border-primary/10" data-alt="A professional studio portrait of a woman in her 30s with a warm, intellectual expression, wearing a stylish blazer. The background is a soft-focus library with deep green accents and bright white lighting, aligning with the corporate modern academic aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmFIo5x1rEP9Oj292Cqetmpmr5JdwQHyovpEL3pLhaGLrige7PzVpp4IRkdM--H0z3u9sSnjTIuC1IdCKZGgq-VKi7M0Urgg4ynYyNyzGtc-4YFqgqrqA_7dDN1A4NdNOEH2n6Uz1YZ5bi8XQARhxlzIxg9uTVyn--laJ5ngyOUfsEzlSq49ycjW2TFUiAR5GHH45M2F_prD3XScSdwvCB3c-lX4fRgEQjad0SipzNWsL2eBzs4G6uIg"/>
+<div>
+<p class="font-headline-sm text-headline-sm text-on-surface leading-none">Dr. Sarah Chen</p>
+<p class="text-label-sm text-on-surface-variant">Senior Data Architect</p>
+</div>
+</div>
+<div class="space-y-sm flex-1">
+<div class="bg-surface-container p-sm rounded-lg">
+<p class="text-label-sm text-primary uppercase font-bold tracking-wider mb-1">Teaches</p>
+<p class="font-body-md text-body-md text-on-surface">Advanced Rust Systems</p>
+</div>
+<div class="bg-surface-container p-sm rounded-lg">
+<p class="text-label-sm text-secondary uppercase font-bold tracking-wider mb-1">Wants to Learn</p>
+<p class="font-body-md text-body-md text-on-surface">UI Design Fundamentals</p>
+</div>
+</div>
+<button class="mt-lg w-full bg-primary text-on-primary py-sm rounded-lg font-label-lg text-label-lg hover:shadow-md transition-shadow">Connect &amp; Swap</button>
+</div>
+<!-- Match Card 2 -->
+<div class="min-w-[300px] bg-surface-container-lowest rounded-xl soft-shadow academic-border-top-blue p-lg flex flex-col hover:scale-[1.02] transition-transform">
+<div class="flex items-center gap-md mb-md">
+<img class="w-14 h-14 rounded-full object-cover border-2 border-secondary/10" data-alt="A professional portrait of a man in his late 20s with glasses, looking focused and friendly. He is set against a clean, modern workspace background with neutral colors and soft ambient lighting. The style is professional and academic, reflecting a high-end corporate educational platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKo764NL2pdMmP93DWCf20ZuTxrH9mz3aqI5BxAD7jwKV7xPFUIfZvEz1DS25hVGuGQw6VaZW2SlpKG3ytgT5NOw5g5fGwIcYaQrrebpTItqqYgRKy2aDUVguteDmFPDfmJ5yygAnnzy38KYWA2nItYRdF44rWdTU9QexP0bl7m6NfsKW1MjI0-lCQBwka4xFMHSb3ofVHY5ZDFz_XAjKygMjdemSt9fUDaUS7VVMy6puhVZ1paoqeNg"/>
+<div>
+<p class="font-headline-sm text-headline-sm text-on-surface leading-none">Jameson Miller</p>
+<p class="text-label-sm text-on-surface-variant">Creative Strategist</p>
+</div>
+</div>
+<div class="space-y-sm flex-1">
+<div class="bg-surface-container p-sm rounded-lg">
+<p class="text-label-sm text-primary uppercase font-bold tracking-wider mb-1">Teaches</p>
+<p class="font-body-md text-body-md text-on-surface">Brand Storytelling</p>
+</div>
+<div class="bg-surface-container p-sm rounded-lg">
+<p class="text-label-sm text-secondary uppercase font-bold tracking-wider mb-1">Wants to Learn</p>
+<p class="font-body-md text-body-md text-on-surface">Technical Writing</p>
+</div>
+</div>
+<button class="mt-lg w-full bg-primary text-on-primary py-sm rounded-lg font-label-lg text-label-lg hover:shadow-md transition-shadow">Connect &amp; Swap</button>
+</div>
+<!-- Match Card 3 -->
+<div class="min-w-[300px] bg-surface-container-lowest rounded-xl soft-shadow academic-border-top-green p-lg flex flex-col hover:scale-[1.02] transition-transform">
+<div class="flex items-center gap-md mb-md">
+<img class="w-14 h-14 rounded-full object-cover border-2 border-primary/10" data-alt="A headshot of a middle-aged woman with a scholarly, confident demeanor. She is positioned in a modern, brightly lit office environment with subtle architectural lines and scholarly green accents. The lighting is soft and professional, evoking trust and institutional quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxMz21Pbr2bV9a2dn8loh5tHdbV85r5rJIxtDW4tgoyA8ab0Eg2Yw3OgnAJClw79PFNb3YetPPCa7thOupXZtUKDXsJTLgqoI62C-0Z1p_2Uk9wYAIUMtjqJq1FB6W9-9_EazGOnlY3CW5LwBXBi0cpTzgt_MsN6wu4pztkznnTsXze-NaR4r3XvUYsv9FXoJ94Fb3mAIEB2z9RhxfU92hwoT2COBdoyfnk92Lhm4ekmua838-fOdV4g"/>
+<div>
+<p class="font-headline-sm text-headline-sm text-on-surface leading-none">Elena Rodriguez</p>
+<p class="text-label-sm text-on-surface-variant">Linguistics Professor</p>
+</div>
+</div>
+<div class="space-y-sm flex-1">
+<div class="bg-surface-container p-sm rounded-lg">
+<p class="text-label-sm text-primary uppercase font-bold tracking-wider mb-1">Teaches</p>
+<p class="font-body-md text-body-md text-on-surface">Phonetic Evolution</p>
+</div>
+<div class="bg-surface-container p-sm rounded-lg">
+<p class="text-label-sm text-secondary uppercase font-bold tracking-wider mb-1">Wants to Learn</p>
+<p class="font-body-md text-body-md text-on-surface">Product Management</p>
+</div>
+</div>
+<button class="mt-lg w-full bg-primary text-on-primary py-sm rounded-lg font-label-lg text-label-lg hover:shadow-md transition-shadow">Connect &amp; Swap</button>
+</div>
+</div>
+</section>
+<!-- Skill Growth Tracker (Left/Middle Column) -->
+<section class="col-span-12 lg:col-span-7">
+<div class="bg-surface-container-lowest rounded-xl soft-shadow p-lg h-full border border-outline-variant/10">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-lg flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">trending_up</span>
+                        Skill Mastery Progress
+                    </h3>
+<div class="space-y-xl">
+<!-- Skill 1 -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<p class="font-label-lg text-label-lg text-on-surface">Visual Design Foundations</p>
+<span class="text-primary font-bold">82%</span>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 82%"></div>
+</div>
+<p class="mt-2 text-body-sm text-on-surface-variant">Next milestone: Component Architecture</p>
+</div>
+<!-- Skill 2 -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<p class="font-label-lg text-label-lg text-on-surface">Functional Programming</p>
+<span class="text-secondary font-bold">45%</span>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 45%"></div>
+</div>
+<p class="mt-2 text-body-sm text-on-surface-variant">Recently completed: Immutable Patterns</p>
+</div>
+<!-- Skill 3 -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<p class="font-label-lg text-label-lg text-on-surface">Public Speaking</p>
+<span class="text-primary font-bold">60%</span>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 60%"></div>
+</div>
+<p class="mt-2 text-body-sm text-on-surface-variant">Goal: Complete 3 mock presentations</p>
+</div>
+</div>
+<div class="mt-xl pt-lg border-t border-outline-variant/30 grid grid-cols-3 gap-md">
+<div class="text-center">
+<p class="text-headline-md font-headline-md text-primary">12</p>
+<p class="text-label-sm text-on-surface-variant">Hours Logged</p>
+</div>
+<div class="text-center">
+<p class="text-headline-md font-headline-md text-secondary">4</p>
+<p class="text-label-sm text-on-surface-variant">Live Sessions</p>
+</div>
+<div class="text-center">
+<p class="text-headline-md font-headline-md text-primary">156</p>
+<p class="text-label-sm text-on-surface-variant">Points Earned</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Active Conversations (Right Column) -->
+<section class="col-span-12 lg:col-span-5 flex flex-col gap-lg">
+<div class="bg-surface-container-lowest rounded-xl soft-shadow p-lg border border-outline-variant/10 flex-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-lg flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary">chat_bubble</span>
+                        Active Conversations
+                    </h3>
+<div class="space-y-md">
+<!-- Chat 1 -->
+<div class="flex items-center gap-md p-sm hover:bg-surface-container rounded-lg cursor-pointer transition-colors border-l-4 border-primary">
+<img class="w-10 h-10 rounded-full" data-alt="A small avatar of a man with a tech-savvy look, wearing headphones and a clean white t-shirt. The photo is brightly lit with a minimalist, clean-tech background style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYG5qs4GbhA7fYuPV5oowVbEkpGH_n1nTpjF2jAsSTdJup9ZlO3AOGbyWM0hwsWGpvShnjsFM8bTyRh6BoRZj5riuKO00sejiToc4UX6JEtKfcOEzLsxsbgJUImnmp7L9mly3QfgCLpE4AD-nkl8HCwzzZVZ3gNERQ4HqBwqMgGttTGnaqOkBVCS6IlK2vjLvsYuma07vG6v6Qgs2vizvi_bH39yXAMFq0xVKQYHxXYS8fM-5ThAlaMg"/>
+<div class="flex-1 overflow-hidden">
+<div class="flex justify-between items-center">
+<p class="font-label-lg text-label-lg text-on-surface truncate">Marcus V.</p>
+<span class="text-[10px] text-on-surface-variant">2m ago</span>
+</div>
+<p class="text-body-sm text-on-surface-variant truncate">"That architecture diagram really helped clarify the..."</p>
+</div>
+</div>
+<!-- Chat 2 -->
+<div class="flex items-center gap-md p-sm hover:bg-surface-container rounded-lg cursor-pointer transition-colors border-l-4 border-transparent">
+<img class="w-10 h-10 rounded-full" data-alt="A circular avatar of a woman with a creative, approachable look, set in a bright office space with soft greenery. Her expression is helpful and professional, fitting the academic exchange theme." src="https://lh3.googleusercontent.com/aida-public/AB6AXuARSVol9Nx0WEeHorv7gkSgCrtdyK-4iw22wlGXQVEv9UW1_nc4C7Je6-dDp96-H2A5ZXUQJaEDBeQUGDs3xmIt2sOCBQncoWxULC_9NERU2AopB_gS6zWG61m-g7BHE_P78d80pCMLEF3neLCaap_wfMluhltaIqSlE89HZqifHUsg1FrK74Tyu5jEUWtJtRhpjEc-x1tSEz_d01b8y1l9lRC_lynHG7XCNGoVpANrEyQcwDWcCW57BA"/>
+<div class="flex-1 overflow-hidden">
+<div class="flex justify-between items-center">
+<p class="font-label-lg text-label-lg text-on-surface truncate">Sophie K.</p>
+<span class="text-[10px] text-on-surface-variant">1h ago</span>
+</div>
+<p class="text-body-sm text-on-surface-variant truncate">"Are we still on for our session tomorrow at 4 PM?"</p>
+</div>
+</div>
+<!-- Chat 3 -->
+<div class="flex items-center gap-md p-sm hover:bg-surface-container rounded-lg cursor-pointer transition-colors border-l-4 border-transparent opacity-60">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">group</span>
+</div>
+<div class="flex-1 overflow-hidden">
+<div class="flex justify-between items-center">
+<p class="font-label-lg text-label-lg text-on-surface truncate">Ethnobotany Group</p>
+<span class="text-[10px] text-on-surface-variant">3h ago</span>
+</div>
+<p class="text-body-sm text-on-surface-variant truncate">Leo uploaded a new field guide PDF.</p>
+</div>
+</div>
+</div>
+<button class="mt-lg w-full text-center py-2 text-primary font-label-lg text-label-lg border border-primary/20 rounded-lg hover:bg-primary/5 transition-all">
+                        Join Chat Sessions
+                    </button>
+</div>
+</section>
+<!-- Community Spotlight (Full Width Bento Style) -->
+<section class="col-span-12">
+<div class="bg-primary text-on-primary rounded-2xl p-xl soft-shadow relative overflow-hidden">
+<!-- Background Accent -->
+<div class="absolute -right-20 -top-20 w-80 h-80 bg-primary-container rounded-full opacity-20 blur-3xl"></div>
+<div class="absolute -left-10 -bottom-10 w-40 h-40 bg-secondary rounded-full opacity-30 blur-2xl"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-sm mb-lg">
+<span class="material-symbols-outlined text-primary-fixed">local_fire_department</span>
+<h3 class="font-headline-md text-headline-md">Community Spotlight</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-xl">
+<!-- Trending -->
+<div class="bg-white/10 backdrop-blur-md rounded-xl p-lg border border-white/20">
+<p class="text-label-sm uppercase font-bold tracking-widest text-primary-fixed mb-md">Rising This Week</p>
+<div class="space-y-md">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md">Rust Development</span>
+<span class="text-label-sm px-2 py-1 bg-primary-container/40 rounded-full">+42%</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md">Ethnobotany</span>
+<span class="text-label-sm px-2 py-1 bg-primary-container/40 rounded-full">+18%</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md">Generative Art AI</span>
+<span class="text-label-sm px-2 py-1 bg-primary-container/40 rounded-full">+12%</span>
+</div>
+</div>
+</div>
+<!-- Webinar -->
+<div class="bg-white/10 backdrop-blur-md rounded-xl p-lg border border-white/20">
+<p class="text-label-sm uppercase font-bold tracking-widest text-primary-fixed mb-md">Upcoming Webinar</p>
+<div class="flex flex-col h-full justify-between">
+<div>
+<p class="font-headline-sm text-headline-sm leading-tight mb-2">Sustainable AI Infrastructure</p>
+<p class="text-body-sm opacity-80 flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+                                            Tomorrow, 10:00 AM
+                                        </p>
+</div>
+<button class="mt-lg bg-white text-primary py-2 rounded-lg font-label-lg text-label-lg hover:bg-primary-fixed transition-all">RSVP Now</button>
+</div>
+</div>
+<!-- Success Story -->
+<div class="bg-white/10 backdrop-blur-md rounded-xl p-lg border border-white/20 flex flex-col justify-between">
+<p class="text-label-sm uppercase font-bold tracking-widest text-primary-fixed mb-md">Success Story</p>
+<p class="italic text-body-md mb-md">"I swapped Python tips for Brazilian Jiu-Jitsu strategy. The crossover in logic was mind-blowing!"</p>
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold text-xs">DB</div>
+<p class="text-label-sm">David B., Lead Engineer</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer (Predicted Component) -->
+<footer class="w-full py-xl px-gutter max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-md mt-xl border-t border-outline-variant/20">
+<div class="flex flex-col items-center md:items-start gap-xs">
+<h4 class="font-headline-sm text-on-surface font-bold">SkillXchange</h4>
+<p class="text-body-sm text-on-surface-variant">© 2024 SkillXchange. Collaborative Growth.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-md">
+<a class="text-label-md text-on-surface-variant hover:text-primary transition-colors hover:underline" href="#">Privacy Policy</a>
+<a class="text-label-md text-on-surface-variant hover:text-primary transition-colors hover:underline" href="#">Terms of Service</a>
+<a class="text-label-md text-on-surface-variant hover:text-primary transition-colors hover:underline" href="#">Community Guidelines</a>
+<a class="text-label-md text-on-surface-variant hover:text-primary transition-colors hover:underline" href="#">Contact Us</a>
+</div>
+</footer>
+</main>
+<!-- Mobile Bottom Navigation Shell -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant shadow-lg flex justify-around py-sm z-50">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-[10px] font-bold">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px]">Mentors</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="text-[10px]">Progress</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px]">Profile</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions and effects
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hover effect for match cards
+            const cards = document.querySelectorAll('.hover\\:scale-\\[1\\.02\\]');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.classList.add('shadow-xl');
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.classList.remove('shadow-xl');
+                });
+            });
+
+            // Smooth scroll indicator for horizontal scroll
+            const scrollContainer = document.querySelector('.overflow-x-auto');
+            if (scrollContainer) {
+                scrollContainer.addEventListener('scroll', () => {
+                    // Logic for custom scrollbar indicator can go here if needed
+                });
+            }
+        });
+    </script>
+</body></html>
