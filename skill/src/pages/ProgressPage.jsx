@@ -5,6 +5,7 @@ import MobileNav from '../components/MobileNav';
 import Footer from '../components/Footer';
 import RequestDialog from '../components/RequestDialog';
 import Toast from '../components/Toast';
+import VideoCall from '../components/VideoCall';
 import { useAnimeStagger, animateProgressRing } from '../hooks/useAnime';
 import { progressApi } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -85,6 +86,7 @@ export default function ProgressPage() {
 
   const [dialogTarget, setDialogTarget] = useState(null);
   const [toast, setToast] = useState(null);
+  const [activeCall, setActiveCall] = useState(null); // { sessionId, partnerName }
 
   const matchRef = useAnimeStagger('.prog-match-card');
 
@@ -179,21 +181,21 @@ export default function ProgressPage() {
               </div>
             </section>
 
-            {/* Next Closest Video Calls & Sessions */}
+            {/* Next Closest Video Call & Session */}
             <section className="glass-card prog-sessions">
               <div className="sessions-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <h3 className="prog-card-title" style={{ margin: 0 }}>
                   <span className="material-symbols-outlined" style={{ color: 'var(--secondary)', verticalAlign: 'middle', marginRight: 6 }}>videocam</span>
-                  Next Video Calls & Sessions
+                  Next Video Call
                 </h3>
                 <Link to="/video-sessions" className="view-all-link" style={{ fontSize: 13, fontWeight: 700 }}>
-                  Schedule +
+                  All Sessions →
                 </Link>
               </div>
 
               <div className="sessions-list">
                 {loading
-                  ? <p style={{ color: 'var(--on-surface-variant)', fontSize: 14 }}>Loading sessions…</p>
+                  ? <p style={{ color: 'var(--on-surface-variant)', fontSize: 14 }}>Loading session…</p>
                   : sessions.length === 0
                     ? (
                       <div style={{ textAlign: 'center', padding: '18px 8px' }}>
@@ -208,7 +210,7 @@ export default function ProgressPage() {
                         </button>
                       </div>
                     )
-                    : sessions.map((s) => (
+                    : sessions.slice(0, 1).map((s) => (
                       <div key={s._id} className="session-card">
                         <div className="session-card-top">
                           <span className={`session-tag tag-${s.tagColor}`}>{s.tag}</span>
@@ -218,7 +220,7 @@ export default function ProgressPage() {
                         <p className="session-mentor">with {s.mentor}</p>
                         <button
                           className="session-join-btn"
-                          onClick={() => navigate(s.partnerId ? `/video-sessions?with=${s.partnerId}` : '/video-sessions')}
+                          onClick={() => setActiveCall({ sessionId: s._id, partnerName: s.mentor })}
                         >
                           <span className="material-symbols-outlined">videocam</span>
                           Join Video Call
@@ -269,6 +271,16 @@ export default function ProgressPage() {
       {/* Toast */}
       {toast && (
         <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
+      )}
+
+      {/* ── Video Call Overlay ── */}
+      {activeCall && (
+        <VideoCall
+          sessionId={activeCall.sessionId}
+          token={localStorage.getItem('sx_token')}
+          partnerName={activeCall.partnerName}
+          onEnd={() => setActiveCall(null)}
+        />
       )}
     </div>
   );

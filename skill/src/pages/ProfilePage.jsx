@@ -22,7 +22,7 @@ function SkillDots({ filled, color = 'primary' }) {
   );
 }
 
-function SkillItem({ skill, type }) {
+function SkillItem({ skill, type, onRemove }) {
   return (
     <div className={`skill-item group-skill-${type}`}>
       <div className="skill-item-left">
@@ -38,6 +38,17 @@ function SkillItem({ skill, type }) {
       </div>
       <div className="skill-item-right">
         <SkillDots filled={skill.bars} color={type === 'teach' ? 'primary' : 'secondary'} />
+        <button
+          className="skill-remove-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(skill.name, type);
+          }}
+          title={`Remove ${skill.name}`}
+          aria-label={`Remove ${skill.name}`}
+        >
+          <span className="material-symbols-outlined">remove</span>
+        </button>
       </div>
     </div>
   );
@@ -254,6 +265,21 @@ export default function ProfilePage() {
     }
   };
 
+  // Remove a skill and persist
+  const handleRemoveSkill = async (skillName, type) => {
+    const field = type === 'teach' ? 'teachingSkills' : 'learningSkills';
+    const currentSkills = profile?.[field] || [];
+    const updated = currentSkills.filter((s) => s.name !== skillName);
+    try {
+      const { user } = await profileApi.update({ [field]: updated });
+      setProfile(user);
+      await refreshUser();
+      showToast(`Removed "${skillName}" from your ${type === 'teach' ? 'teaching' : 'learning'} skills.`, 'info');
+    } catch (err) {
+      showToast(err.message || 'Failed to remove skill', 'error');
+    }
+  };
+
   const handleMatchRequest = useCallback((match) => {
     setDialogTarget({
       _id:      match._id,
@@ -348,7 +374,7 @@ export default function ProfilePage() {
                   <div className="skill-group-list">
                     {teachingSkills.length === 0
                       ? <p style={{ color: 'var(--on-surface-variant)', fontSize: 13, padding: '8px 0' }}>No teaching skills added yet.</p>
-                      : teachingSkills.map((s) => <SkillItem key={s.name} skill={s} type="teach" />)
+                      : teachingSkills.map((s) => <SkillItem key={s.name} skill={s} type="teach" onRemove={handleRemoveSkill} />)
                     }
                   </div>
                 </div>
@@ -366,7 +392,7 @@ export default function ProfilePage() {
                   <div className="skill-group-list">
                     {learningSkills.length === 0
                       ? <p style={{ color: 'var(--on-surface-variant)', fontSize: 13, padding: '8px 0' }}>No learning skills added yet.</p>
-                      : learningSkills.map((s) => <SkillItem key={s.name} skill={s} type="learn" />)
+                      : learningSkills.map((s) => <SkillItem key={s.name} skill={s} type="learn" onRemove={handleRemoveSkill} />)
                     }
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
 import Footer from '../components/Footer';
 import Toast from '../components/Toast';
+import VideoCall from '../components/VideoCall';
 import { videoApi, learnTeachApi } from '../api';
 import './VideoSessionsPage.css';
 
@@ -45,6 +46,8 @@ function toLocalInputValue(date) {
 export default function VideoSessionsPage() {
   const [searchParams] = useSearchParams();
   const preselectedId = searchParams.get('with');
+  const joinSessionId = searchParams.get('join');
+  const partnerParam  = searchParams.get('partner');
 
   const [sessions,     setSessions]     = useState([]);
   const [connections,  setConnections]  = useState([]);
@@ -52,7 +55,11 @@ export default function VideoSessionsPage() {
   const [showForm,     setShowForm]     = useState(!!preselectedId);
   const [toast,        setToast]        = useState(null);
   const [cancelling,   setCancelling]   = useState(null);
+  const [deleting,     setDeleting]     = useState(null);
   const [activeTab,    setActiveTab]    = useState('upcoming');
+  const [activeCall,   setActiveCall]   = useState(
+    joinSessionId ? { sessionId: joinSessionId, partnerName: partnerParam || 'Partner' } : null
+  );
 
   // Form state
   const [formParticipant, setFormParticipant] = useState(preselectedId || '');
@@ -80,13 +87,35 @@ export default function VideoSessionsPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Filter sessions
+  // ── Is call joinable? ── within ±15 min of scheduled time
+  function isCallActive(session) {
+    if (session.status !== 'scheduled') return false;
+    const scheduled = new Date(session.scheduledAt);
+    const windowStart = new Date(scheduled.getTime() - 15 * 60 * 1000);
+    const windowEnd   = new Date(scheduled.getTime() + (session.durationMins + 15) * 60 * 1000);
+    return now >= windowStart && now <= windowEnd;
+  }
+
+  // Filter sessions into accurate buckets
   const now = new Date();
-  const upcoming  = sessions.filter((s) => s.status === 'scheduled' && new Date(s.scheduledAt) > now);
-  const past      = sessions.filter((s) => s.status === 'completed' || (s.status === 'scheduled' && new Date(s.scheduledAt) <= now));
+  
+  // Ongoing: scheduled and currently in active call window
+  const ongoing   = sessions.filter((s) => s.status === 'scheduled' && isCallActive(s));
+
+  // Upcoming: scheduled and strictly in the future (window hasn't opened yet)
+  const upcoming  = sessions.filter((s) => s.status === 'scheduled' && !isCallActive(s) && new Date(s.scheduledAt).getTime() - 15 * 60 * 1000 > now.getTime());
+
+  // Past: completed, or scheduled but call window has fully passed
+  const past      = sessions.filter((s) => s.status === 'completed' || (s.status === 'scheduled' && !isCallActive(s) && new Date(s.scheduledAt).getTime() + (s.durationMins + 15) * 60 * 1000 < now.getTime()));
+
+  // Cancelled: status cancelled
   const cancelled = sessions.filter((s) => s.status === 'cancelled');
 
-  const displayedSessions = activeTab === 'upcoming' ? upcoming : activeTab === 'past' ? past : cancelled;
+  const displayedSessions =
+    activeTab === 'ongoing'   ? ongoing   :
+    activeTab === 'upcoming'  ? upcoming  :
+    activeTab === 'past'      ? past      :
+    cancelled;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -136,6 +165,19 @@ export default function VideoSessionsPage() {
       setToast({ message: 'Session marked as completed ✅', type: 'success' });
     } catch (err) {
       setToast({ message: err.message || 'Failed to update', type: 'error' });
+    }
+  };
+
+  const handleDelete = async (sessionId) => {
+    setDeleting(sessionId);
+    try {
+      await videoApi.delete(sessionId);
+      setSessions((prev) => prev.filter((s) => s._id !== sessionId));
+      setToast({ message: 'Session deleted 🗑️', type: 'info' });
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to delete session', type: 'error' });
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -297,7 +339,15 @@ export default function VideoSessionsPage() {
 
           {/* ── Stats strip ── */}
           <div className="vs-stats-strip">
-            <div className="vs-stat-item">
+            <div className="vs-stat-item" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('ongoing')}>
+              <span className="material-symbols-outlined vs-stat-icon" style={{ color: '#ef4444' }}>sensors</span>
+              <div>
+                <div className="vs-stat-val">{ongoing.length}</div>
+                <div className="vs-stat-lbl">Live / Ongoing</div>
+              </div>
+            </div>
+            <div className="vs-stat-sep" />
+            <div className="vs-stat-item" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('upcoming')}>
               <span className="material-symbols-outlined vs-stat-icon" style={{ color: 'var(--primary)' }}>event_upcoming</span>
               <div>
                 <div className="vs-stat-val">{upcoming.length}</div>
@@ -305,11 +355,11 @@ export default function VideoSessionsPage() {
               </div>
             </div>
             <div className="vs-stat-sep" />
-            <div className="vs-stat-item">
-              <span className="material-symbols-outlined vs-stat-icon" style={{ color: 'var(--secondary)' }}>check_circle</span>
+            <div className="vs-stat-item" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('past')}>
+              <span className="material-symbols-outlined vs-stat-icon" style={{ color: 'var(--secondary)' }}>history</span>
               <div>
                 <div className="vs-stat-val">{past.length}</div>
-                <div className="vs-stat-lbl">Completed</div>
+                <div className="vs-stat-lbl">Past</div>
               </div>
             </div>
             <div className="vs-stat-sep" />
@@ -325,13 +375,14 @@ export default function VideoSessionsPage() {
           {/* ── Tab bar ── */}
           <div className="vs-tabs">
             {[
-              { key: 'upcoming',  label: `Upcoming (${upcoming.length})`,  icon: 'event_upcoming' },
-              { key: 'past',      label: `Past (${past.length})`,          icon: 'history' },
-              { key: 'cancelled', label: `Cancelled (${cancelled.length})`, icon: 'cancel' },
+              { key: 'ongoing',   label: `Live / Ongoing (${ongoing.length})`,  icon: 'sensors' },
+              { key: 'upcoming',  label: `Upcoming (${upcoming.length})`,        icon: 'event_upcoming' },
+              { key: 'past',      label: `Past (${past.length})`,                icon: 'history' },
+              { key: 'cancelled', label: `Cancelled (${cancelled.length})`,      icon: 'cancel' },
             ].map((tab) => (
               <button
                 key={tab.key}
-                className={`vs-tab ${activeTab === tab.key ? 'active' : ''}`}
+                className={`vs-tab ${activeTab === tab.key ? 'active' : ''} ${tab.key === 'ongoing' && ongoing.length > 0 ? 'tab-live' : ''}`}
                 onClick={() => setActiveTab(tab.key)}
                 id={`vs-tab-${tab.key}`}
               >
@@ -352,93 +403,183 @@ export default function VideoSessionsPage() {
             ) : displayedSessions.length === 0 ? (
               <div className="vs-empty">
                 <span className="material-symbols-outlined vs-empty-icon">
-                  {activeTab === 'upcoming' ? 'event_upcoming' : activeTab === 'past' ? 'history' : 'cancel'}
+                  {activeTab === 'ongoing' ? 'sensors_off' : activeTab === 'upcoming' ? 'event_upcoming' : activeTab === 'past' ? 'history' : 'cancel'}
                 </span>
                 <p className="vs-empty-title">
-                  {activeTab === 'upcoming'
-                    ? 'No upcoming sessions'
+                  {activeTab === 'ongoing'
+                    ? 'No ongoing video calls right now'
+                    : activeTab === 'upcoming'
+                    ? 'No upcoming sessions scheduled'
                     : activeTab === 'past'
-                    ? 'No past sessions yet'
+                    ? 'No past sessions'
                     : 'No cancelled sessions'}
                 </p>
-                {activeTab === 'upcoming' && (
+                {(activeTab === 'upcoming' || activeTab === 'ongoing') && (
                   <button className="vs-empty-cta" onClick={() => setShowForm(true)}>
                     <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
-                    Schedule your first session
+                    Schedule a session
                   </button>
                 )}
               </div>
             ) : (
               <div className="vs-session-list">
-                {displayedSessions.map((session) => (
-                  <div key={session._id} className={`vs-session-card ${session.status}`}>
-                    {/* Left accent */}
-                    <div className={`vs-session-accent ${sessionStatusColor(session.status)}`} />
+                {displayedSessions.map((session) => {
+                  const isActive = isCallActive(session);
+                  const isPast = session.status === 'completed' || (session.status === 'scheduled' && !isActive && new Date(session.scheduledAt).getTime() + (session.durationMins + 15) * 60 * 1000 < now.getTime());
+                  const isCancelled = session.status === 'cancelled';
 
-                    <div className="vs-session-body">
-                      {/* Top row */}
-                      <div className="vs-session-top">
-                        <div className="vs-session-partner">
-                          {session.other.avatar
-                            ? <img src={session.other.avatar} alt={session.other.name} className="vs-partner-avatar" />
-                            : <div className="vs-partner-avatar vs-partner-avatar-initials">{session.other.initials}</div>
-                          }
-                          <div>
-                            <p className="vs-partner-name">{session.other.name}</p>
-                            <p className="vs-partner-role">{session.isHost ? 'You are hosting' : 'Hosted by partner'}</p>
+                  return (
+                    <div key={session._id} className={`vs-session-card ${session.status} ${isActive ? 'is-live' : ''}`}>
+                      {/* Left accent */}
+                      <div className={`vs-session-accent ${isActive ? 'live' : sessionStatusColor(session.status)}`} />
+
+                      <div className="vs-session-body">
+                        {/* Top row */}
+                        <div className="vs-session-top">
+                          <div className="vs-session-partner">
+                            {session.other.avatar
+                              ? <img src={session.other.avatar} alt={session.other.name} className="vs-partner-avatar" />
+                              : <div className="vs-partner-avatar vs-partner-avatar-initials">{session.other.initials}</div>
+                            }
+                            <div>
+                              <p className="vs-partner-name">{session.other.name}</p>
+                              <p className="vs-partner-role">{session.isHost ? 'You are hosting' : 'Hosted by partner'}</p>
+                            </div>
+                          </div>
+                          <span className={`vs-status-chip ${isActive ? 'live' : sessionStatusColor(session.status)}`}>
+                            {isActive ? 'Live Now' : session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                          </span>
+                        </div>
+
+                        {/* Topic */}
+                        <h4 className="vs-session-topic">{session.topic}</h4>
+
+                        {/* Meta row */}
+                        <div className="vs-session-meta">
+                          <span className="vs-meta-item">
+                            <span className="material-symbols-outlined vs-meta-icon">schedule</span>
+                            {formatDateTime(session.scheduledAt)}
+                          </span>
+                          <span className="vs-meta-item">
+                            <span className="material-symbols-outlined vs-meta-icon">timer</span>
+                            {session.durationMins} min
+                          </span>
+                        </div>
+
+                        {/* Footer row: Message/notes on left, action buttons on right */}
+                        <div className="vs-session-footer">
+                          {session.notes ? (
+                            <div className="vs-session-notes-box">
+                              <span className="material-symbols-outlined vs-notes-icon">notes</span>
+                              <p className="vs-session-notes">{session.notes}</p>
+                            </div>
+                          ) : (
+                            <div className="vs-session-notes-placeholder" />
+                          )}
+
+                          <div className="vs-session-actions">
+                            {/* Live / Ongoing Call Actions */}
+                            {isActive && (
+                              <>
+                                <button
+                                  className="vs-action-btn join-call active"
+                                  onClick={() => setActiveCall({ sessionId: session._id, partnerName: session.other.name })}
+                                  id={`vs-join-${session._id}`}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>videocam</span>
+                                  Join Call
+                                </button>
+                                <button
+                                  className="vs-action-btn complete"
+                                  onClick={() => handleMarkComplete(session._id)}
+                                  id={`vs-complete-${session._id}`}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>check_circle</span>
+                                  Mark Complete
+                                </button>
+                                <button
+                                  className="vs-action-btn cancel"
+                                  onClick={() => handleCancel(session._id)}
+                                  disabled={cancelling === session._id}
+                                  id={`vs-cancel-${session._id}`}
+                                >
+                                  {cancelling === session._id ? 'Cancelling…' : 'Cancel'}
+                                </button>
+                              </>
+                            )}
+
+                            {/* Upcoming (Future) Actions */}
+                            {!isActive && session.status === 'scheduled' && !isPast && (
+                              <>
+                                <button
+                                  className="vs-action-btn join-call inactive"
+                                  disabled
+                                  title="Available 15 min before scheduled time"
+                                  id={`vs-join-${session._id}`}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>videocam</span>
+                                  Join (soon)
+                                </button>
+                                <button
+                                  className="vs-action-btn cancel"
+                                  onClick={() => handleCancel(session._id)}
+                                  disabled={cancelling === session._id}
+                                  id={`vs-cancel-${session._id}`}
+                                >
+                                  {cancelling === session._id ? 'Cancelling…' : 'Cancel'}
+                                </button>
+                              </>
+                            )}
+
+                            {/* Past Call Actions */}
+                            {isPast && (
+                              <>
+                                {session.status === 'scheduled' && (
+                                  <button
+                                    className="vs-action-btn complete"
+                                    onClick={() => handleMarkComplete(session._id)}
+                                    id={`vs-complete-${session._id}`}
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>check_circle</span>
+                                    Mark Complete
+                                  </button>
+                                )}
+                                <button
+                                  className="vs-action-btn delete"
+                                  onClick={() => handleDelete(session._id)}
+                                  disabled={deleting === session._id}
+                                  id={`vs-delete-${session._id}`}
+                                  title="Delete session"
+                                >
+                                  {deleting === session._id
+                                    ? 'Deleting…'
+                                    : <><span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span> Delete</>
+                                  }
+                                </button>
+                              </>
+                            )}
+
+                            {/* Cancelled Call Actions */}
+                            {isCancelled && (
+                              <button
+                                className="vs-action-btn delete"
+                                onClick={() => handleDelete(session._id)}
+                                disabled={deleting === session._id}
+                                id={`vs-delete-${session._id}`}
+                                title="Delete session"
+                              >
+                                {deleting === session._id
+                                  ? 'Deleting…'
+                                  : <><span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span> Delete</>
+                                }
+                              </button>
+                            )}
                           </div>
                         </div>
-                        <span className={`vs-status-chip ${sessionStatusColor(session.status)}`}>
-                          {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                        </span>
                       </div>
-
-                      {/* Topic */}
-                      <h4 className="vs-session-topic">{session.topic}</h4>
-
-                      {/* Meta row */}
-                      <div className="vs-session-meta">
-                        <span className="vs-meta-item">
-                          <span className="material-symbols-outlined vs-meta-icon">schedule</span>
-                          {formatDateTime(session.scheduledAt)}
-                        </span>
-                        <span className="vs-meta-item">
-                          <span className="material-symbols-outlined vs-meta-icon">timer</span>
-                          {session.durationMins} min
-                        </span>
-                      </div>
-
-                      {session.notes && (
-                        <p className="vs-session-notes">{session.notes}</p>
-                      )}
-
-                      {/* Actions */}
-                      {session.status === 'scheduled' && (
-                        <div className="vs-session-actions">
-                          <button
-                            className="vs-action-btn complete"
-                            onClick={() => handleMarkComplete(session._id)}
-                            id={`vs-complete-${session._id}`}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>check_circle</span>
-                            Mark Complete
-                          </button>
-                          <button
-                            className="vs-action-btn cancel"
-                            onClick={() => handleCancel(session._id)}
-                            disabled={cancelling === session._id}
-                            id={`vs-cancel-${session._id}`}
-                          >
-                            {cancelling === session._id
-                              ? 'Cancelling…'
-                              : <><span className="material-symbols-outlined" style={{ fontSize: 16 }}>close</span> Cancel</>
-                            }
-                          </button>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -450,6 +591,16 @@ export default function VideoSessionsPage() {
 
       {toast && (
         <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
+      )}
+
+      {/* ── Video Call Overlay ── */}
+      {activeCall && (
+        <VideoCall
+          sessionId={activeCall.sessionId}
+          token={localStorage.getItem('sx_token')}
+          partnerName={activeCall.partnerName}
+          onEnd={() => setActiveCall(null)}
+        />
       )}
     </div>
   );

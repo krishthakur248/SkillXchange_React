@@ -1,12 +1,28 @@
 // ── SkillXchange Backend — server.js ──
 const express  = require('express');
+const http     = require('http');
+const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors     = require('cors');
 const dotenv   = require('dotenv');
+const { registerVideoSignaling } = require('./src/socket/videoSignaling');
 
 dotenv.config();
 
-const app = express();
+const app    = express();
+const server = http.createServer(app);
+
+// ── Socket.IO setup ──
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+// Register WebRTC signaling logic
+registerVideoSignaling(io);
 
 // ── Middleware ──
 app.use(cors({
@@ -60,7 +76,7 @@ async function startServer() {
       console.log('✅  MongoDB connected');
     }
 
-    app.listen(PORT, () => console.log(`🚀  Server running on port ${PORT}`));
+    server.listen(PORT, () => console.log(`🚀  Server running on port ${PORT}`));
   } catch (err) {
     console.error('❌  Startup error:', err.message);
     process.exit(1);

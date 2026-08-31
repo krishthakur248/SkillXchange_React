@@ -91,10 +91,11 @@ router.get('/', protect, async (req, res) => {
       };
     });
 
-    // Combine both and sort chronologically
+    // Combine both and sort chronologically, picking only the single closest session
     let sessions = [...videoSessionsFormatted, ...mentorSessionsFormatted]
+      .filter((s) => s.dateObj >= new Date(Date.now() - 60 * 60 * 1000))
       .sort((a, b) => a.dateObj - b.dateObj)
-      .slice(0, 4);
+      .slice(0, 1);
 
     // ── Find all users who already have active (pending or accepted) requests with 'me' to exclude from matches ──
     const activeRequests = await SkillExchangeRequest.find({

@@ -81,8 +81,9 @@ export const chatApi = {
 // ── Video Sessions ──
 export const videoApi = {
   list:    ()        => apiFetch('/api/video-sessions'),
-  create:  (body)    => apiFetch('/api/video-sessions',     { method: 'POST',  body: JSON.stringify(body) }),
-  update:  (id, body) => apiFetch(`/api/video-sessions/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  create:  (body)    => apiFetch('/api/video-sessions',     { method: 'POST',   body: JSON.stringify(body) }),
+  update:  (id, body) => apiFetch(`/api/video-sessions/${id}`, { method: 'PATCH',  body: JSON.stringify(body) }),
+  delete:  (id)       => apiFetch(`/api/video-sessions/${id}`, { method: 'DELETE' }),
 };
 
 // ── Profile ──

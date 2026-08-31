@@ -496,6 +496,45 @@
   color: var(--on-surface-variant);
 }
 
+.vs-status-chip.live {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  animation: vs-live-glow 2s ease-in-out infinite;
+}
+
+.vs-session-accent.live {
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes vs-live-glow {
+  0%, 100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.6); }
+}
+
+.vs-tab.tab-live {
+  position: relative;
+}
+
+.vs-tab.tab-live::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  background: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #ef4444;
+  animation: vs-live-dot 1.2s infinite;
+}
+
+@keyframes vs-live-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
 .vs-session-topic {
   font-family: var(--font-display);
   font-size: 17px;
@@ -524,20 +563,54 @@
   color: var(--outline);
 }
 
-.vs-session-notes {
-  font-size: 13px;
-  color: var(--on-surface-variant);
+/* Footer row: message on the left, buttons on the right */
+.vs-session-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.vs-session-notes-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: var(--surface-container-low);
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-radius: var(--radius-md);
   border-left: 3px solid var(--primary-fixed-dim);
-  line-height: 1.5;
+  flex: 1;
+  min-width: 180px;
+  max-width: 60%;
+}
+
+.vs-notes-icon {
+  font-size: 16px;
+  color: var(--outline);
+  flex-shrink: 0;
+}
+
+.vs-session-notes {
+  font-size: 12.5px;
+  color: var(--on-surface-variant);
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.vs-session-notes-placeholder {
+  flex: 1;
 }
 
 .vs-session-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 4px;
+  margin-left: auto;
+  align-items: center;
 }
 
 .vs-action-btn {
@@ -573,8 +646,47 @@
   transform: translateY(-1px);
 }
 
+.vs-action-btn.delete {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.vs-action-btn.delete:hover:not(:disabled) {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
 .vs-action-btn:disabled {
   opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Join Call button ── */
+.vs-action-btn.join-call.active {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.45);
+  animation: vs-join-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes vs-join-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(99, 102, 241, 0.45); }
+  50%       { box-shadow: 0 0 22px rgba(139, 92, 246, 0.7); }
+}
+
+.vs-action-btn.join-call.active:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+.vs-action-btn.join-call.inactive {
+  background: var(--surface-variant);
+  color: var(--on-surface-variant);
+  opacity: 0.55;
   cursor: not-allowed;
 }
 

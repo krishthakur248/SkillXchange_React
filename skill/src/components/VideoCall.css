@@ -1,0 +1,428 @@
+/* ══════════════════════════════════════════════════════════════════
+   VideoCall.css  —  Premium dark glassmorphism video call overlay
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Overlay ── */
+.vc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #0a0a0f;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-body, 'Inter', sans-serif);
+}
+
+/* ── Remote video (fills the screen) ── */
+.vc-remote-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, #1a1a2e 0%, #0a0a0f 70%);
+}
+
+.vc-remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 0;
+}
+
+/* Placeholder shown while waiting for remote stream */
+.vc-remote-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  pointer-events: none;
+}
+
+.vc-avatar-circle {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
+  animation: vc-avatar-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes vc-avatar-pulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.4); transform: scale(1); }
+  50%       { box-shadow: 0 0 60px rgba(99, 102, 241, 0.65); transform: scale(1.04); }
+}
+
+.vc-remote-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+/* ── Local video (PiP — bottom-right corner) ── */
+.vc-local-wrap {
+  position: absolute;
+  bottom: 110px;
+  right: 20px;
+  width: 180px;
+  height: 120px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.05);
+  z-index: 10;
+  background: #111;
+  cursor: move;
+}
+
+@media (max-width: 600px) {
+  .vc-local-wrap {
+    width: 120px;
+    height: 80px;
+    bottom: 100px;
+    right: 12px;
+  }
+}
+
+.vc-local-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1); /* mirror for natural selfie feel */
+}
+
+.vc-local-label {
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  pointer-events: none;
+}
+
+.vc-cam-off-overlay {
+  position: absolute;
+  inset: 0;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vc-cam-off-overlay .material-symbols-outlined {
+  font-size: 2rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Header bar ── */
+.vc-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, transparent 100%);
+  backdrop-filter: blur(0px);
+}
+
+.vc-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vc-header-icon {
+  font-size: 1.25rem;
+  color: #6366f1;
+}
+
+.vc-header-name {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.vc-header-status {
+  margin: 0;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.2;
+}
+
+/* Connection indicator pill */
+.vc-conn-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.vc-conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6b7280;
+  transition: background 0.3s;
+}
+
+.vc-conn-indicator.connected   .vc-conn-dot { background: #10b981; box-shadow: 0 0 6px #10b981; }
+.vc-conn-indicator.waiting     .vc-conn-dot { background: #f59e0b; animation: vc-blink 1.2s infinite; }
+.vc-conn-indicator.connecting  .vc-conn-dot { background: #6366f1; animation: vc-blink 0.8s infinite; }
+.vc-conn-indicator.reconnecting .vc-conn-dot { background: #f97316; animation: vc-blink 0.6s infinite; }
+.vc-conn-indicator.error       .vc-conn-dot { background: #ef4444; }
+
+@keyframes vc-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.vc-conn-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: capitalize;
+}
+
+/* ── Status banners (center of screen) ── */
+.vc-banner-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.vc-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: vc-banner-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes vc-banner-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.vc-status-banner.connecting  { background: rgba(99, 102, 241, 0.2); border-color: rgba(99,102,241,0.3); }
+.vc-status-banner.waiting     { background: rgba(245, 158, 11, 0.15); border-color: rgba(245,158,11,0.3); }
+.vc-status-banner.reconnecting { background: rgba(249, 115, 22, 0.15); border-color: rgba(249,115,22,0.3); }
+.vc-status-banner.error       { background: rgba(239, 68, 68, 0.15); border-color: rgba(239,68,68,0.3); }
+
+/* Countdown mode banner — shown when joining early and alone */
+.vc-status-banner.countdown-mode {
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 36px;
+  border-radius: 20px;
+  text-align: center;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.vc-countdown-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.vc-countdown-timer {
+  font-size: 3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: #fbbf24;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+  animation: vc-timer-glow 2s ease-in-out infinite;
+}
+
+@keyframes vc-timer-glow {
+  0%, 100% { text-shadow: 0 0 20px rgba(251, 191, 36, 0.55); }
+  50%       { text-shadow: 0 0 35px rgba(251, 191, 36, 0.85), 0 0 8px rgba(251,191,36,0.4); }
+}
+
+.vc-countdown-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(251, 191, 36, 0.7);
+}
+
+.vc-countdown-subtext {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.4;
+}
+
+.vc-countdown-subtext strong {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.vc-status-icon {
+  font-size: 1.1rem;
+}
+
+.vc-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6366f1;
+  flex-shrink: 0;
+}
+
+.vc-status-dot.pulse {
+  animation: vc-blink 0.8s infinite;
+}
+
+.vc-status-dot.orange { background: #f97316; }
+
+/* ── Control bar (bottom) ── */
+.vc-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 20px 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+}
+
+.vc-ctrl-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 16px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  min-width: 60px;
+  min-height: 60px;
+  position: relative;
+}
+
+.vc-ctrl-btn .material-symbols-outlined {
+  font-size: 1.6rem;
+  transition: transform 0.15s ease;
+}
+
+.vc-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: scale(1.08);
+}
+
+.vc-ctrl-btn:active {
+  transform: scale(0.96);
+}
+
+/* Muted / cam-off state */
+.vc-ctrl-btn.off {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.vc-ctrl-btn.off:hover {
+  background: rgba(239, 68, 68, 0.35);
+}
+
+/* End call button */
+.vc-ctrl-btn.end {
+  background: #ef4444;
+  border-color: #dc2626;
+  color: #fff;
+  min-width: 70px;
+  min-height: 70px;
+}
+
+.vc-ctrl-btn.end .material-symbols-outlined {
+  font-size: 1.9rem;
+}
+
+.vc-ctrl-btn.end:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.vc-ctrl-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+  position: absolute;
+  bottom: -18px;
+  white-space: nowrap;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .vc-ctrl-btn {
+    min-width: 52px;
+    min-height: 52px;
+    padding: 12px;
+  }
+  .vc-ctrl-btn.end {
+    min-width: 60px;
+    min-height: 60px;
+  }
+  .vc-controls {
+    gap: 12px;
+  }
+  .vc-status-banner {
+    font-size: 0.8rem;
+    padding: 10px 18px;
+  }
+}

@@ -130,4 +130,27 @@ router.patch('/:id', protect, async (req, res) => {
   }
 });
 
+// ── DELETE /api/video-sessions/:id ── (protected)
+// Delete a session
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const session = await VideoSession.findOneAndDelete({
+      _id: req.params.id,
+      $or: [
+        { host: req.user._id },
+        { participant: req.user._id },
+      ],
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found or unauthorized.' });
+    }
+
+    res.json({ message: 'Session deleted successfully.' });
+  } catch (err) {
+    console.error('Delete session error:', err);
+    res.status(500).json({ error: 'Server error deleting session.' });
+  }
+});
+
 module.exports = router;

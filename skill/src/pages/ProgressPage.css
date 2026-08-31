@@ -82,11 +82,13 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-md);
+  align-items: start;
 }
 
 @media (min-width: 1024px) {
   .prog-top-grid {
     grid-template-columns: 8fr 4fr;
+    align-items: start;
   }
 }
 
@@ -201,6 +203,18 @@
   flex-direction: column;
   gap: var(--space-md);
   margin-top: var(--space-md);
+  max-height: 440px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.sessions-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sessions-list::-webkit-scrollbar-thumb {
+  background: var(--outline-variant);
+  border-radius: var(--radius-full);
 }
 
 .session-card {
