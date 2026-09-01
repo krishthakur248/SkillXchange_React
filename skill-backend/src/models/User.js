@@ -54,6 +54,16 @@ const userSchema = new mongoose.Schema({
   preferredMethod:      { type: String, default: 'Video Call', enum: ['Video Call', 'Chat Only', 'In Person'] },
 
   memberSince: { type: Date, default: Date.now },
+
+  // ── Mentor feature ──
+  userRole: { type: String, enum: ['user', 'mentor'], default: 'user' },
+  mentorVerification: {
+    status:        { type: String, enum: ['none', 'pending', 'verified', 'test_bypass'], default: 'none' },
+    method:        { type: String, enum: ['document', 'email', 'test_bypass'], default: undefined },
+    documentUrl:   { type: String },     // stub — populated by real upload later
+    verifiedEmail: { type: String },     // stub — populated by email check later
+    verifiedAt:    { type: Date },
+  },
 }, { timestamps: true });
 
 // ── Auto-generate initials ──

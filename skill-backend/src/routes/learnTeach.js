@@ -129,7 +129,8 @@ router.get('/recommended', protect, async (req, res) => {
     ];
 
     let matches = await User.find({
-      _id: { $nin: excludedIds },
+      _id:      { $nin: excludedIds },
+      userRole: { $ne: 'mentor' },         // exclude mentors from P2P pool
       $or: [
         { 'teachingSkills.name': { $in: myLearnNames } },
         { 'learningSkills.name': { $in: myTeachNames } },
@@ -139,7 +140,7 @@ router.get('/recommended', protect, async (req, res) => {
       .limit(3);
 
     if (matches.length === 0) {
-      matches = await User.find({ _id: { $nin: excludedIds } })
+      matches = await User.find({ _id: { $nin: excludedIds }, userRole: { $ne: 'mentor' } })
         .select('name role initials avatar teachingSkills learningSkills rating')
         .limit(3);
     }
@@ -243,6 +244,8 @@ router.patch('/request/:id', protect, async (req, res) => {
     }
 
     if (status === 'accepted') {
+      const MentorClass = require('../models/MentorClass');
+
       await SkillExchangeRequest.updateMany(
         {
           $or: [
@@ -254,6 +257,30 @@ router.patch('/request/:id', protect, async (req, res) => {
         },
         { $set: { status: 'declined' } }
       );
+
+      // If acceptor is a mentor (or recipient was a mentor), auto-enroll student in mentor's active class
+      const mentorId = req.user.userRole === 'mentor' ? req.user._id : request.to;
+      const studentId = String(mentorId) === String(request.to) ? request.from : request.to;
+
+      let mentorClass = await MentorClass.findOne({
+        mentorId,
+        status: 'active',
+        skills: request.toSkill,
+      });
+
+      if (!mentorClass) {
+        mentorClass = await MentorClass.findOne({
+          mentorId,
+          status: 'active',
+        });
+      }
+
+      if (mentorClass && !mentorClass.enrolledStudents.some((id) => String(id) === String(studentId))) {
+        if (mentorClass.enrolledStudents.length < mentorClass.maxStudents) {
+          mentorClass.enrolledStudents.push(studentId);
+          await mentorClass.save();
+        }
+      }
     }
 
     request.status = status;

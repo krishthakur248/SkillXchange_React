@@ -5,7 +5,7 @@ import MobileNav from '../components/MobileNav';
 import Footer from '../components/Footer';
 import RequestDialog from '../components/RequestDialog';
 import Toast from '../components/Toast';
-import { profileApi } from '../api';
+import { profileApi, mentorFlowApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useAnimeStagger } from '../hooks/useAnime';
 import './ProfilePage.css';
@@ -164,6 +164,148 @@ function AddSkillModal({ type, onSave, onClose }) {
   );
 }
 
+/* ── Quit Mentor Confirmation Modal ── */
+function QuitMentorModal({ onConfirm, onClose, loading }) {
+  const navigate = useNavigate();
+  const [classesLoading, setClassesLoading] = useState(true);
+  const [activeClasses,  setActiveClasses]  = useState([]);
+
+  useEffect(() => {
+    mentorFlowApi.listClasses()
+      .then(({ classes = [] }) => {
+        const active = classes.filter((c) => c.status === 'active');
+        setActiveClasses(active);
+      })
+      .catch(() => {})
+      .finally(() => setClassesLoading(false));
+  }, []);
+
+  const hasActiveClasses = activeClasses.length > 0;
+
+  return (
+    <div className="add-skill-backdrop" onClick={onClose}>
+      <div className="quit-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="quit-modal-header">
+          <div className="quit-modal-header-left">
+            <div className={`quit-icon-wrap ${hasActiveClasses ? 'blocked' : ''}`}>
+              <span className="material-symbols-outlined">
+                {hasActiveClasses ? 'block' : 'warning'}
+              </span>
+            </div>
+            <div>
+              <h3 className="quit-modal-title">
+                {hasActiveClasses ? 'Cannot Quit Mentoring Yet' : 'Quit Mentoring?'}
+              </h3>
+              <p className="quit-modal-sub">
+                {hasActiveClasses ? 'Active classes currently running' : 'Revert to standard member profile'}
+              </p>
+            </div>
+          </div>
+          <button className="quit-modal-close" onClick={onClose} title="Close">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div className="quit-modal-body">
+          {classesLoading ? (
+            <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--on-surface-variant)', fontSize: 14 }}>
+              <span className="material-symbols-outlined animate-spin" style={{ fontSize: 24, verticalAlign: 'middle', marginRight: 8 }}>
+                progress_activity
+              </span>
+              Checking active classes…
+            </div>
+          ) : hasActiveClasses ? (
+            <>
+              <p className="quit-modal-text" style={{ color: 'var(--on-surface)' }}>
+                You cannot quit mentoring while you have <strong>{activeClasses.length} active class{activeClasses.length > 1 ? 'es' : ''}</strong> running:
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 130, overflowY: 'auto' }}>
+                {activeClasses.map((c) => (
+                  <div
+                    key={c._id}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      background: 'var(--surface-container)',
+                      border: '1px solid var(--outline-variant)',
+                      fontSize: 13,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>{c.title}</span>
+                    <span style={{ fontSize: 11, color: 'var(--secondary)', fontWeight: 700 }}>
+                      {c.enrolledStudents?.length || 0}/{c.maxStudents} Enrolled
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="quit-modal-alert" style={{ borderLeftColor: 'var(--error)' }}>
+                <span className="material-symbols-outlined quit-alert-icon" style={{ color: 'var(--error)' }}>error</span>
+                <span>Please conclude or archive all your classes in the Mentor Dashboard before quitting.</span>
+              </div>
+
+              <div className="quit-modal-actions">
+                <button className="quit-btn-cancel" onClick={onClose}>
+                  Cancel
+                </button>
+                <button
+                  className="quit-btn-confirm"
+                  style={{ background: 'var(--primary)' }}
+                  onClick={() => {
+                    onClose();
+                    navigate('/mentors', { state: { openMentorFlow: true } });
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>dashboard</span>
+                  Go to Classes
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="quit-modal-text">
+                You have no active classes running. You will be removed from the mentor pool and returned to normal member status.
+              </p>
+
+              <div className="quit-modal-alert">
+                <span className="material-symbols-outlined quit-alert-icon">check_circle</span>
+                <span>All your previous classes are archived. You can become a mentor again at any time.</span>
+              </div>
+
+              <div className="quit-modal-actions">
+                <button className="quit-btn-cancel" onClick={onClose} disabled={loading}>
+                  Cancel
+                </button>
+                <button
+                  className="quit-btn-confirm"
+                  onClick={onConfirm}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin" style={{ fontSize: 18 }}>progress_activity</span>
+                      Updating…
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined" style={{ fontSize: 18 }}>logout</span>
+                      Yes, Quit Mentoring
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Component ── */
 export default function ProfilePage() {
   const { user: authUser, refreshUser } = useAuth();
@@ -181,6 +323,10 @@ export default function ProfilePage() {
 
   // Add skill modal
   const [addSkillType, setAddSkillType] = useState(null); // 'teach' | 'learn' | null
+
+  // Mentor toggle
+  const [showQuitModal,  setShowQuitModal]  = useState(false);
+  const [mentorLoading,  setMentorLoading]  = useState(false);
 
   // Request dialog + toast
   const [dialogTarget, setDialogTarget] = useState(null);
@@ -290,6 +436,27 @@ export default function ProfilePage() {
     });
   }, []);
 
+  // Mentor toggle handlers
+  const handleBecomeMentor = () => {
+    navigate('/mentors', { state: { openMentorFlow: true } });
+  };
+
+  const handleQuitMentor = async () => {
+    setMentorLoading(true);
+    try {
+      await mentorFlowApi.quit();
+      await refreshUser();
+      const { user } = await profileApi.get();
+      setProfile(user);
+      setShowQuitModal(false);
+      showToast('You have quit mentoring. Classes archived. ✅', 'info');
+    } catch (err) {
+      showToast(err.message || 'Failed to quit mentoring', 'error');
+    } finally {
+      setMentorLoading(false);
+    }
+  };
+
   const displayUser    = profile || authUser;
   const teachingSkills = profile?.teachingSkills || [];
   const learningSkills = profile?.learningSkills || [];
@@ -327,7 +494,9 @@ export default function ProfilePage() {
               <div className="profile-info">
                 <div className="profile-name-row">
                   <h3 className="profile-name">{displayUser?.name || '—'}</h3>
-                  <span className="profile-badge">{displayUser?.badge || 'LEARNER'}</span>
+                  <span className={`profile-badge ${displayUser?.userRole === 'mentor' ? 'badge-mentor' : ''}`}>
+                    {displayUser?.userRole === 'mentor' ? 'MENTOR' : (displayUser?.badge || 'LEARNER')}
+                  </span>
                 </div>
                 <p className="profile-bio">
                   {displayUser?.bio || 'No bio yet. Update your profile to tell others what you\'re about.'}
@@ -349,6 +518,43 @@ export default function ProfilePage() {
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                       {displayUser.rating.toFixed(1)} ({displayUser.reviewCount} reviews)
                     </span>
+                  )}
+                  {/* Credit points — only displayed for regular users, completely hidden for mentors */}
+                  {displayUser?.userRole !== 'mentor' && (
+                    <span className="profile-meta-item" title="Credit Points">
+                      <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontVariationSettings: "'FILL' 1" }}>stars</span>
+                      <strong>{displayUser?.points ?? 0}</strong> Credits
+                    </span>
+                  )}
+                </div>
+
+                {/* Mentor toggle button */}
+                <div className="mentor-toggle-row">
+                  {displayUser?.userRole === 'mentor' ? (
+                    <>
+                      <span className="mentor-active-badge">
+                        <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}>school</span>
+                        Active Mentor
+                      </span>
+                      <button
+                        id="quit-mentor-btn"
+                        className="mentor-toggle-btn quit"
+                        onClick={() => setShowQuitModal(true)}
+                        disabled={mentorLoading}
+                      >
+                        <span className="material-symbols-outlined">logout</span>
+                        Quit Mentor
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      id="become-mentor-btn"
+                      className="mentor-toggle-btn become"
+                      onClick={handleBecomeMentor}
+                    >
+                      <span className="material-symbols-outlined">school</span>
+                      Become a Mentor
+                    </button>
                   )}
                 </div>
               </div>
@@ -472,6 +678,15 @@ export default function ProfilePage() {
           type={addSkillType}
           onSave={handleAddSkill}
           onClose={() => setAddSkillType(null)}
+        />
+      )}
+
+      {/* Quit Mentor Modal */}
+      {showQuitModal && (
+        <QuitMentorModal
+          loading={mentorLoading}
+          onConfirm={handleQuitMentor}
+          onClose={() => setShowQuitModal(false)}
         />
       )}
 

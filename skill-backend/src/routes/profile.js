@@ -24,6 +24,7 @@ router.patch('/', protect, async (req, res) => {
       'timezone', 'availableForExchange', 'preferredMethod',
       'bio', 'name', 'role', 'location',
       'teachingSkills', 'learningSkills',
+      'userRole', 'mentorVerification',
     ];
 
     const updates = {};
@@ -64,7 +65,8 @@ router.get('/matches', protect, async (req, res) => {
     const myLearnNames = me.learningSkills.map((s) => s.name);
 
     let potentialMatches = await User.find({
-      _id: { $nin: excludedIds },
+      _id:      { $nin: excludedIds },
+      userRole: { $ne: 'mentor' },           // exclude mentors from P2P pool
       $or: [
         { 'learningSkills.name': { $in: myTeachNames } },
         { 'teachingSkills.name': { $in: myLearnNames } },
@@ -73,9 +75,9 @@ router.get('/matches', protect, async (req, res) => {
       .select('name initials role teachingSkills learningSkills rating')
       .limit(2);
 
-    // Fallback to any 2 non-connected users
+    // Fallback to any 2 non-connected, non-mentor users
     if (potentialMatches.length === 0) {
-      potentialMatches = await User.find({ _id: { $nin: excludedIds } })
+      potentialMatches = await User.find({ _id: { $nin: excludedIds }, userRole: { $ne: 'mentor' } })
         .select('name initials role teachingSkills learningSkills rating')
         .limit(2);
     }

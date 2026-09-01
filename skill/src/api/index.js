@@ -97,3 +97,23 @@ export const profileApi = {
 export const progressApi = {
   get: () => apiFetch('/api/progress'),
 };
+
+// ── Mentor Flow ──
+export const mentorFlowApi = {
+  become:        ()          => apiFetch('/api/mentor/become',                { method: 'POST' }),
+  quit:          ()          => apiFetch('/api/mentor/quit',                  { method: 'POST' }),
+  verifyDocument:(body)      => apiFetch('/api/mentor/verify/document',       { method: 'POST', body: JSON.stringify(body) }),
+  verifyEmail:   (body)      => apiFetch('/api/mentor/verify/email',          { method: 'POST', body: JSON.stringify(body) }),
+  testBypass:    (body)      => apiFetch('/api/mentor/verify/test-bypass',    { method: 'POST', body: JSON.stringify(body) }),
+  listClasses:   ()          => apiFetch('/api/mentor/classes'),
+  createClass:   (body)      => apiFetch('/api/mentor/classes',               { method: 'POST',   body: JSON.stringify(body) }),
+  updateClass:   (id, body)  => apiFetch(`/api/mentor/classes/${id}`,        { method: 'PATCH',  body: JSON.stringify(body) }),
+  deleteClass:   (id)        => apiFetch(`/api/mentor/classes/${id}`,        { method: 'DELETE' }),
+  completeClass: (id)        => apiFetch(`/api/mentor/classes/${id}/complete`, { method: 'POST' }),
+  enrollClass:   (id)        => apiFetch(`/api/mentor/classes/${id}/enroll`, { method: 'POST' }),
+  requestMentorship:(body)   => apiFetch('/api/mentor/request',              { method: 'POST', body: JSON.stringify(body) }),
+  browse:        (params)    => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch(`/api/mentor/browse${qs}`);
+  },
+};

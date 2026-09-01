@@ -13,20 +13,40 @@ router.get('/', protect, async (req, res) => {
     const me = req.user;
     const now = new Date();
 
-    // ── 1. Query upcoming & scheduled VideoSession instances ──
+    const MentorClass = require('../models/MentorClass');
+
+    // ── 1. Query upcoming & scheduled VideoSession instances (including Class Cohort sessions) ──
+    const myClasses = await MentorClass.find({
+      $or: [
+        { mentorId: me._id },
+        { enrolledStudents: me._id },
+      ],
+      status: 'active',
+    }).distinct('_id');
+
     const rawVideoSessions = await VideoSession.find({
-      $or: [{ host: me._id }, { participant: me._id }],
+      $or: [
+        { host: me._id },
+        { participant: me._id },
+        { classId: { $in: myClasses } },
+      ],
       status: 'scheduled',
     })
-      .populate('host', 'name initials avatar')
-      .populate('participant', 'name initials avatar')
+      .populate('host', 'name initials avatar role')
+      .populate('participant', 'name initials avatar role')
+      .populate('classId', 'title description skills')
       .sort({ scheduledAt: 1 });
 
     const videoSessionsFormatted = rawVideoSessions
-      .filter((vs) => vs.host && vs.participant)
       .map((vs) => {
-        const isHost = String(vs.host._id) === String(me._id);
-        const partner = isHost ? vs.participant : vs.host;
+        const isClassSession = !!vs.classId;
+        const isHost = String(vs.host?._id || vs.host) === String(me._id);
+        const partner = isClassSession
+          ? (vs.host || { name: 'Mentor', initials: 'M' })
+          : (isHost ? vs.participant : vs.host);
+
+        if (!isClassSession && !partner) return null;
+
         const dt = new Date(vs.scheduledAt);
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -42,20 +62,27 @@ router.get('/', protect, async (req, res) => {
         const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         return {
-          _id:         vs._id,
+          _id:            vs._id,
           tag,
-          tagColor:    isToday ? 'primary' : 'secondary',
-          time:        timeStr,
-          title:       vs.topic || 'Skill Exchange Call',
-          mentor:      partner.name,
-          partnerId:   partner._id,
-          initials:    partner.initials,
-          duration:    `${vs.durationMins || 60}m`,
-          action:      'join',
-          isVideoCall: true,
-          dateObj:     dt,
+          tagColor:       isToday ? 'primary' : 'secondary',
+          time:           timeStr,
+          scheduledAt:    vs.scheduledAt,
+          title:          vs.topic || (isClassSession ? `${vs.classId.title} Live Session` : 'Skill Exchange Call'),
+          mentor:         isClassSession ? `${vs.classId.title} (Cohort)` : partner.name,
+          partnerId:      isClassSession ? `class_${vs.classId._id}` : partner._id,
+          initials:       isClassSession ? 'CL' : partner.initials,
+          duration:       `${vs.durationMins || 60}m`,
+          action:         'join',
+          isVideoCall:    true,
+          isClassSession,
+          className:      vs.classId?.title || '',
+          hostName:       vs.host?.name || 'Mentor',
+          isHost,
+          notes:          vs.notes || '',
+          dateObj:        dt,
         };
-      });
+      })
+      .filter(Boolean);
 
     // ── 2. Query mentor sessions from Session collection ──
     const rawMentorSessions = await Session.find({
@@ -82,6 +109,7 @@ router.get('/', protect, async (req, res) => {
         tag,
         tagColor:    s.tagColor || 'primary',
         time:        timeStr,
+        scheduledAt: s.dateTime,
         title:       s.title,
         mentor:      s.mentor,
         action:      s.action || 'join',
@@ -91,11 +119,13 @@ router.get('/', protect, async (req, res) => {
       };
     });
 
-    // Combine both and sort chronologically, picking only the single closest session
-    let sessions = [...videoSessionsFormatted, ...mentorSessionsFormatted]
+    // Combine all future sessions chronologically (starting from 1 hour ago)
+    const allUpcomingSessions = [...videoSessionsFormatted, ...mentorSessionsFormatted]
       .filter((s) => s.dateObj >= new Date(Date.now() - 60 * 60 * 1000))
-      .sort((a, b) => a.dateObj - b.dateObj)
-      .slice(0, 1);
+      .sort((a, b) => a.dateObj - b.dateObj);
+
+    // Closest single session for top card
+    const sessions = allUpcomingSessions;
 
     // ── Find all users who already have active (pending or accepted) requests with 'me' to exclude from matches ──
     const activeRequests = await SkillExchangeRequest.find({

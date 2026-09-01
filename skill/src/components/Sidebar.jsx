@@ -40,7 +40,7 @@ export default function Sidebar() {
           <div className="sidebar-user-avatar">{user.initials || '??'}</div>
           <div className="sidebar-user-info">
             <p className="sidebar-user-name">{user.name}</p>
-            <p className="sidebar-user-badge">{user.badge || 'LEARNER'}</p>
+            <p className="sidebar-user-badge">{user.userRole === 'mentor' ? 'MENTOR' : (user.badge || 'LEARNER')}</p>
           </div>
         </div>
       )}

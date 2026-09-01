@@ -35,6 +35,7 @@ app.use(express.json());
 app.use('/api/auth',           require('./src/routes/auth'));
 app.use('/api/home',           require('./src/routes/home'));
 app.use('/api/mentors',        require('./src/routes/mentors'));
+app.use('/api/mentor',         require('./src/routes/mentorFlow'));
 app.use('/api/learn-teach',    require('./src/routes/learnTeach'));
 app.use('/api/profile',        require('./src/routes/profile'));
 app.use('/api/progress',       require('./src/routes/progress'));

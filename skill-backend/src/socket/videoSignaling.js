@@ -33,19 +33,34 @@ function registerVideoSignaling(io) {
         currentUserId = userId;
 
         // 2. Load session from DB
+        const User = require('../models/User');
         const session = await VideoSession.findById(sessionId)
           .populate('host',        'name initials avatar')
-          .populate('participant', 'name initials avatar');
+          .populate('participant', 'name initials avatar')
+          .populate('classId',     'title enrolledStudents mentorId');
 
         if (!session) {
           return socket.emit('session-error', { message: 'Session not found.' });
         }
 
-        // 3. Verify this user is host or participant
-        const hostId        = String(session.host._id);
-        const participantId = String(session.participant._id);
+        const hostId = session.host ? String(session.host._id) : null;
+        const participantId = session.participant ? String(session.participant._id) : null;
+        const isHost = userId === hostId;
 
-        if (userId !== hostId && userId !== participantId) {
+        // 3. Authorisation check
+        let isAuthorized = (userId === hostId) || (participantId && userId === participantId);
+
+        if (!isAuthorized && session.classId) {
+          const isEnrolled = session.classId.enrolledStudents?.some(
+            (sId) => String(sId) === userId
+          );
+          const isClassMentor = String(session.classId.mentorId) === userId;
+          if (isEnrolled || isClassMentor) {
+            isAuthorized = true;
+          }
+        }
+
+        if (!isAuthorized) {
           return socket.emit('session-error', { message: 'You are not authorised for this session.' });
         }
 
@@ -65,9 +80,10 @@ function registerVideoSignaling(io) {
           }
         }
 
-        // Check room capacity (at most 2 distinct users: host and participant)
-        if (members.size >= 2 && !members.has(userId)) {
-          return socket.emit('session-error', { message: 'Session room is full (max 2 participants).' });
+        // Room capacity: 2 for 1:1, up to 20 for class cohort
+        const maxCapacity = session.classId ? 20 : 2;
+        if (members.size >= maxCapacity && !members.has(userId)) {
+          return socket.emit('session-error', { message: `Session room is full (max ${maxCapacity} participants).` });
         }
 
         // Join room and register socket
@@ -75,20 +91,28 @@ function registerVideoSignaling(io) {
         members.set(userId, socket.id);
         joinedSessionId = sessionId;
 
-        const isHost = userId === hostId;
-        const self   = isHost ? session.host        : session.participant;
-        const other  = isHost ? session.participant : session.host;
+        let self = isHost ? session.host : (session.participant || await User.findById(userId).select('name initials avatar'));
+        if (!self) {
+          self = { name: 'Member', initials: 'M', avatar: '' };
+        }
+
+        let other = isHost ? session.participant : session.host;
+        if (!other && session.classId) {
+          other = { _id: session.classId._id, name: session.classId.title || 'Class Cohort', initials: 'CL', avatar: '' };
+        } else if (!other) {
+          other = { _id: '', name: 'Peer', initials: 'P', avatar: '' };
+        }
 
         // Tell the joining socket it succeeded
         socket.emit('session-joined', {
           sessionId,
           scheduledAt: session.scheduledAt,
           self:  { userId, name: self.name, initials: self.initials, avatar: self.avatar || '' },
-          other: { userId: other._id, name: other.name, initials: other.initials, avatar: other.avatar || '' },
+          other: { userId: other._id ? String(other._id) : '', name: other.name, initials: other.initials, avatar: other.avatar || '' },
           membersInRoom: members.size,
         });
 
-        // Tell the other peer in the room
+        // Tell other peers in the room
         socket.to(roomId).emit('peer-joined', {
           userId,
           name: self.name,

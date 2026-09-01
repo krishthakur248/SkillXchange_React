@@ -212,10 +212,12 @@ export default function HomePage() {
                   <p className="stat-val" style={{ color: 'var(--secondary)' }}>{loading ? '—' : stats.liveSessions ?? 0}</p>
                   <p className="stat-label">Live Sessions</p>
                 </div>
-                <div className="stat-item">
-                  <p className="stat-val" style={{ color: 'var(--primary)' }}>{loading ? '—' : stats.points ?? 0}</p>
-                  <p className="stat-label">Points Earned</p>
-                </div>
+                {user?.userRole !== 'mentor' && (
+                  <div className="stat-item">
+                    <p className="stat-val" style={{ color: 'var(--primary)' }}>{loading ? '—' : stats.points ?? 0}</p>
+                    <p className="stat-label">Points Earned</p>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -266,61 +268,140 @@ export default function HomePage() {
             </section>
           </div>
 
-          {/* ── Middle: Match Cards (Excludes connected/pending peers) ── */}
-          <section className="home-section">
-            <div className="section-row-header">
-              <h3 className="section-row-title">
-                <span className="material-symbols-outlined" style={{ color: 'var(--secondary)' }}>swap_horiz</span>
-                Perfect Reciprocal Matches
-              </h3>
-              <Link to="/mentors" className="view-all-link">View All</Link>
-            </div>
-            <div className="match-cards-scroll" ref={cardsRef}>
-              {loading
-                ? [1, 2, 3].map((k) => <SkeletonCard key={k} />)
-                : matchCards.length === 0
-                  ? <p style={{ color: 'var(--on-surface-variant)', fontSize: 14 }}>No matches yet — add skills to your profile or explore mentors!</p>
-                  : matchCards.map((c) => (
-                    <div key={c._id} className={`match-card border-accent-${c.accent || 'primary'}`}>
+          {/* ── Middle: Mentor Classes for Mentors VS Match Cards for Normal Users ── */}
+          {user?.userRole === 'mentor' ? (
+            <section className="home-section">
+              <div className="section-row-header">
+                <h3 className="section-row-title">
+                  <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>school</span>
+                  Your Active Courses & Cohorts
+                </h3>
+                <Link to="/mentors" className="view-all-link">Manage Classes →</Link>
+              </div>
+              <div className="match-cards-scroll" ref={cardsRef}>
+                {loading ? (
+                  [1, 2, 3].map((k) => <SkeletonCard key={k} />)
+                ) : (data?.mentorClasses || []).length === 0 ? (
+                  <div style={{ padding: '24px 16px', background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--outline-variant)', width: '100%' }}>
+                    <p style={{ fontWeight: 700, fontSize: 15, color: 'var(--on-surface)', marginBottom: 4 }}>
+                      No mentor classes created yet
+                    </p>
+                    <p style={{ color: 'var(--on-surface-variant)', fontSize: 13, marginBottom: 14 }}>
+                      Create your first cohort-based class in the Mentor Dashboard to start teaching students.
+                    </p>
+                    <button
+                      className="match-btn"
+                      style={{ display: 'inline-flex', width: 'auto', padding: '8px 18px' }}
+                      onClick={() => navigate('/mentors', { state: { openMentorFlow: true } })}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 18, marginRight: 6 }}>add_circle</span>
+                      Create a Mentor Class
+                    </button>
+                  </div>
+                ) : (
+                  (data?.mentorClasses || []).map((cls) => (
+                    <div key={cls._id} className="match-card border-accent-blue" style={{ minWidth: 280 }}>
                       <div className="match-card-header">
-                        {c.avatar ? (
-                          <img
-                            src={c.avatar}
-                            alt={c.name}
-                            className="match-avatar-img"
-                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                          />
-                        ) : null}
-                        <div className="match-avatar" style={c.avatar ? { display: 'none' } : {}}>{c.initials}</div>
+                        <div className="match-avatar" style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>school</span>
+                        </div>
                         <div>
-                          <p className="match-name">{c.name}</p>
-                          <p className="match-role">{c.role}</p>
+                          <p className="match-name">{cls.title}</p>
+                          <p className="match-role" style={{ color: 'var(--secondary)', fontWeight: 700 }}>
+                            {cls.enrolledStudents?.length || 0}/{cls.maxStudents} Students Enrolled
+                          </p>
                         </div>
                       </div>
                       <div className="match-skills">
                         <div className="match-skill-row teaches">
-                          <p className="skill-label">Teaches</p>
-                          <p className="skill-value">{c.teaches}</p>
+                          <p className="skill-label">Skills / Topics</p>
+                          <p className="skill-value">{cls.skills?.join(', ') || 'General'}</p>
                         </div>
-                        <div className="match-skill-row wants">
-                          <p className="skill-label wants-label">Wants to Learn</p>
-                          <p className="skill-value">{c.wants}</p>
-                        </div>
+                        {cls.description && (
+                          <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {cls.description}
+                          </p>
+                        )}
                       </div>
                       <div className="match-card-actions">
-                        <Link to="/profile" className="view-profile-btn">View Profile</Link>
+                        <button
+                          className="view-profile-btn"
+                          onClick={() => navigate(`/chat?with=class_${cls._id}`)}
+                          title="Open class cohort chat"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: 16, marginRight: 4 }}>forum</span>
+                          Cohort Chat
+                        </button>
                         <button
                           className="match-btn"
-                          onClick={() => handleOpenRequest(c)}
+                          onClick={() => navigate(`/video-sessions?class=${cls._id}`)}
+                          title="Schedule live video workshop for this class"
                         >
-                          Request
+                          <span className="material-symbols-outlined" style={{ fontSize: 16, marginRight: 4 }}>videocam</span>
+                          Live Session
                         </button>
                       </div>
                     </div>
                   ))
-              }
-            </div>
-          </section>
+                )}
+              </div>
+            </section>
+          ) : (
+            <section className="home-section">
+              <div className="section-row-header">
+                <h3 className="section-row-title">
+                  <span className="material-symbols-outlined" style={{ color: 'var(--secondary)' }}>swap_horiz</span>
+                  Perfect Reciprocal Matches
+                </h3>
+                <Link to="/mentors" className="view-all-link">Browse Mentors</Link>
+              </div>
+              <div className="match-cards-scroll" ref={cardsRef}>
+                {loading
+                  ? [1, 2, 3].map((k) => <SkeletonCard key={k} />)
+                  : matchCards.length === 0
+                    ? <p style={{ color: 'var(--on-surface-variant)', fontSize: 14 }}>No matches yet — add skills to your profile or explore mentors!</p>
+                    : matchCards.map((c) => (
+                      <div key={c._id} className={`match-card border-accent-${c.accent || 'primary'}`}>
+                        <div className="match-card-header">
+                          {c.avatar ? (
+                            <img
+                              src={c.avatar}
+                              alt={c.name}
+                              className="match-avatar-img"
+                              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                            />
+                          ) : null}
+                          <div className="match-avatar" style={c.avatar ? { display: 'none' } : {}}>{c.initials}</div>
+                          <div>
+                            <p className="match-name">{c.name}</p>
+                            <p className="match-role">{c.role}</p>
+                          </div>
+                        </div>
+                        <div className="match-skills">
+                          <div className="match-skill-row teaches">
+                            <p className="skill-label">Teaches</p>
+                            <p className="skill-value">{c.teaches}</p>
+                          </div>
+                          <div className="match-skill-row wants">
+                            <p className="skill-label wants-label">Wants to Learn</p>
+                            <p className="skill-value">{c.wants}</p>
+                          </div>
+                        </div>
+                        <div className="match-card-actions">
+                          <Link to="/profile" className="view-profile-btn">View Profile</Link>
+                          <button
+                            className="match-btn"
+                            onClick={() => handleOpenRequest(c)}
+                          >
+                            Request
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                }
+              </div>
+            </section>
+          )}
 
           {/* ── Community Spotlight ── */}
           <section className="spotlight-section">

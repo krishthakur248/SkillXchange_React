@@ -5,7 +5,8 @@ import MobileNav from '../components/MobileNav';
 import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import VideoCall from '../components/VideoCall';
-import { videoApi, learnTeachApi } from '../api';
+import { videoApi, learnTeachApi, mentorFlowApi } from '../api';
+import { useAuth } from '../context/AuthContext';
 import './VideoSessionsPage.css';
 
 const DURATION_OPTIONS = [
@@ -44,15 +45,18 @@ function toLocalInputValue(date) {
 }
 
 export default function VideoSessionsPage() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const preselectedId = searchParams.get('with');
+  const classParam    = searchParams.get('class');
   const joinSessionId = searchParams.get('join');
   const partnerParam  = searchParams.get('partner');
 
   const [sessions,     setSessions]     = useState([]);
   const [connections,  setConnections]  = useState([]);
+  const [myClasses,    setMyClasses]    = useState([]);
   const [loading,      setLoading]      = useState(true);
-  const [showForm,     setShowForm]     = useState(!!preselectedId);
+  const [showForm,     setShowForm]     = useState(!!preselectedId || !!classParam);
   const [toast,        setToast]        = useState(null);
   const [cancelling,   setCancelling]   = useState(null);
   const [deleting,     setDeleting]     = useState(null);
@@ -62,6 +66,9 @@ export default function VideoSessionsPage() {
   );
 
   // Form state
+  const isMentor = user?.userRole === 'mentor';
+  const [sessionType,     setSessionType]     = useState(classParam ? 'class' : (isMentor ? 'class' : 'peer'));
+  const [formClassId,     setFormClassId]     = useState(classParam || '');
   const [formParticipant, setFormParticipant] = useState(preselectedId || '');
   const [formTopic,       setFormTopic]       = useState('');
   const [formDate,        setFormDate]        = useState('');
@@ -72,18 +79,24 @@ export default function VideoSessionsPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [{ sessions: sess }, { connections: conns }] = await Promise.all([
+      const [{ sessions: sess }, { connections: conns }, classesRes] = await Promise.all([
         videoApi.list(),
         learnTeachApi.connections(),
+        isMentor ? mentorFlowApi.listClasses() : Promise.resolve({ classes: [] }),
       ]);
+      const activeOnlyClasses = (classesRes?.classes || []).filter((c) => c.status === 'active');
       setSessions(sess);
       setConnections(conns);
+      setMyClasses(activeOnlyClasses);
+      if (classParam && activeOnlyClasses.some((c) => c._id === classParam)) {
+        setFormClassId(classParam);
+      }
     } catch (err) {
       console.error('Load video sessions error:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isMentor, classParam]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -119,27 +132,39 @@ export default function VideoSessionsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formParticipant || !formTopic.trim() || !formDate) return;
+    if (sessionType === 'class') {
+      if (!formClassId || !formTopic.trim() || !formDate) return;
+    } else {
+      if (!formParticipant || !formTopic.trim() || !formDate) return;
+    }
 
     setSubmitting(true);
     try {
-      await videoApi.create({
-        participantId: formParticipant,
-        topic:         formTopic.trim(),
-        scheduledAt:   new Date(formDate).toISOString(),
-        durationMins:  formDuration,
-        notes:         formNotes.trim(),
-      });
-      setToast({ message: 'Session scheduled! 🎉', type: 'success' });
+      const payload = {
+        topic:        formTopic.trim(),
+        scheduledAt:  new Date(formDate).toISOString(),
+        durationMins: formDuration,
+        notes:        formNotes.trim(),
+      };
+
+      if (sessionType === 'class') {
+        payload.classId = formClassId;
+      } else {
+        payload.participantId = formParticipant;
+      }
+
+      await videoApi.create(payload);
+      setToast({ message: sessionType === 'class' ? 'Class live session scheduled! 🎉' : 'Session scheduled! 🎉', type: 'success' });
       setShowForm(false);
       setFormParticipant('');
+      setFormClassId('');
       setFormTopic('');
       setFormDate('');
       setFormDuration(60);
       setFormNotes('');
       loadData();
     } catch (err) {
-      setToast({ message: err.message || 'Failed to schedule session', type: 'error' });
+      setToast({ message: err.message || 'Failed to schedule session.', type: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -215,32 +240,92 @@ export default function VideoSessionsPage() {
               </h3>
               <form className="vs-form" onSubmit={handleSubmit} id="schedule-session-form">
 
-                {/* Participant */}
-                <div className="vs-field">
-                  <label className="vs-label" htmlFor="vs-participant">
-                    <span className="material-symbols-outlined vs-label-icon">person</span>
-                    Skill Partner
-                  </label>
-                  {connections.length === 0 ? (
-                    <p className="vs-no-connections">No accepted connections yet. Accept a skill exchange request first.</p>
-                  ) : (
-                    <div className="vs-select-wrap">
-                      <select
-                        id="vs-participant"
-                        className="vs-select"
-                        value={formParticipant}
-                        onChange={(e) => setFormParticipant(e.target.value)}
-                        required
+                {/* Session type switcher if user is a mentor */}
+                {isMentor && (
+                  <div className="vs-field">
+                    <label className="vs-label">
+                      <span className="material-symbols-outlined vs-label-icon">tune</span>
+                      Session Category
+                    </label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        className={`mentor-tab ${sessionType === 'class' ? 'active' : ''}`}
+                        style={{ flex: 1, padding: '8px 12px', justifyContent: 'center' }}
+                        onClick={() => setSessionType('class')}
                       >
-                        <option value="">— Choose a partner —</option>
-                        {connections.map((c) => (
-                          <option key={c.userId} value={c.userId}>{c.name}</option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined vs-select-arrow">expand_more</span>
+                        <span className="material-symbols-outlined">school</span>
+                        Mentor Class / Course
+                      </button>
+                      <button
+                        type="button"
+                        className={`mentor-tab ${sessionType === 'peer' ? 'active' : ''}`}
+                        style={{ flex: 1, padding: '8px 12px', justifyContent: 'center' }}
+                        onClick={() => setSessionType('peer')}
+                      >
+                        <span className="material-symbols-outlined">person</span>
+                        1-on-1 Session
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {/* Class / Partner Selection */}
+                {sessionType === 'class' ? (
+                  <div className="vs-field">
+                    <label className="vs-label" htmlFor="vs-class">
+                      <span className="material-symbols-outlined vs-label-icon">school</span>
+                      Select Class / Course
+                    </label>
+                    {myClasses.length === 0 ? (
+                      <p className="vs-no-connections">No active classes available. Create or activate a class in the Mentor Dashboard first.</p>
+                    ) : (
+                      <div className="vs-select-wrap">
+                        <select
+                          id="vs-class"
+                          className="vs-select"
+                          value={formClassId}
+                          onChange={(e) => setFormClassId(e.target.value)}
+                          required
+                        >
+                          <option value="">— Choose a class / course —</option>
+                          {myClasses.map((c) => (
+                            <option key={c._id} value={c._id}>
+                              {c.title} ({c.enrolledStudents?.length || 0} enrolled)
+                            </option>
+                          ))}
+                        </select>
+                        <span className="material-symbols-outlined vs-select-arrow">expand_more</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="vs-field">
+                    <label className="vs-label" htmlFor="vs-participant">
+                      <span className="material-symbols-outlined vs-label-icon">person</span>
+                      Skill Partner
+                    </label>
+                    {connections.length === 0 ? (
+                      <p className="vs-no-connections">No accepted connections yet. Accept a skill exchange request first.</p>
+                    ) : (
+                      <div className="vs-select-wrap">
+                        <select
+                          id="vs-participant"
+                          className="vs-select"
+                          value={formParticipant}
+                          onChange={(e) => setFormParticipant(e.target.value)}
+                          required
+                        >
+                          <option value="">— Choose a partner —</option>
+                          {connections.map((c) => (
+                            <option key={c.userId} value={c.userId}>{c.name}</option>
+                          ))}
+                        </select>
+                        <span className="material-symbols-outlined vs-select-arrow">expand_more</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Topic */}
                 <div className="vs-field">
@@ -252,7 +337,7 @@ export default function VideoSessionsPage() {
                     id="vs-topic"
                     className="vs-input"
                     type="text"
-                    placeholder="e.g. React Hooks Introduction, Python basics Q&A"
+                    placeholder={sessionType === 'class' ? "e.g. Cohort Week 2 Live Workshop & Code Review" : "e.g. React Hooks Introduction, Python basics Q&A"}
                     value={formTopic}
                     onChange={(e) => setFormTopic(e.target.value)}
                     required
@@ -324,7 +409,7 @@ export default function VideoSessionsPage() {
                   <button
                     type="submit"
                     className="vs-submit-btn"
-                    disabled={submitting || connections.length === 0}
+                    disabled={submitting || (sessionType === 'class' ? myClasses.length === 0 : connections.length === 0)}
                     id="vs-submit-btn"
                   >
                     {submitting
@@ -364,10 +449,12 @@ export default function VideoSessionsPage() {
             </div>
             <div className="vs-stat-sep" />
             <div className="vs-stat-item">
-              <span className="material-symbols-outlined vs-stat-icon" style={{ color: 'var(--tertiary)' }}>people</span>
+              <span className="material-symbols-outlined vs-stat-icon" style={{ color: 'var(--tertiary)' }}>
+                {isMentor ? 'school' : 'people'}
+              </span>
               <div>
-                <div className="vs-stat-val">{connections.length}</div>
-                <div className="vs-stat-lbl">Partners</div>
+                <div className="vs-stat-val">{isMentor ? myClasses.length : connections.length}</div>
+                <div className="vs-stat-lbl">{isMentor ? 'Classes' : 'Partners'}</div>
               </div>
             </div>
           </div>
@@ -379,23 +466,23 @@ export default function VideoSessionsPage() {
               { key: 'upcoming',  label: `Upcoming (${upcoming.length})`,        icon: 'event_upcoming' },
               { key: 'past',      label: `Past (${past.length})`,                icon: 'history' },
               { key: 'cancelled', label: `Cancelled (${cancelled.length})`,      icon: 'cancel' },
-            ].map((tab) => (
+            ].map(({ key, label, icon }) => (
               <button
-                key={tab.key}
-                className={`vs-tab ${activeTab === tab.key ? 'active' : ''} ${tab.key === 'ongoing' && ongoing.length > 0 ? 'tab-live' : ''}`}
-                onClick={() => setActiveTab(tab.key)}
-                id={`vs-tab-${tab.key}`}
+                key={key}
+                className={`vs-tab ${activeTab === key ? 'active' : ''}`}
+                onClick={() => setActiveTab(key)}
+                id={`vs-tab-${key}`}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{tab.icon}</span>
-                {tab.label}
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{icon}</span>
+                {label}
               </button>
             ))}
           </div>
 
           {/* ── Sessions list ── */}
-          <div className="vs-sessions">
+          <div className="vs-sessions-container">
             {loading ? (
-              <div className="vs-loading">
+              <div className="vs-skeleton-list">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="vs-skeleton-card" />
                 ))}
@@ -437,13 +524,29 @@ export default function VideoSessionsPage() {
                         {/* Top row */}
                         <div className="vs-session-top">
                           <div className="vs-session-partner">
-                            {session.other.avatar
-                              ? <img src={session.other.avatar} alt={session.other.name} className="vs-partner-avatar" />
-                              : <div className="vs-partner-avatar vs-partner-avatar-initials">{session.other.initials}</div>
-                            }
+                            {session.isClassSession ? (
+                              <div className="vs-partner-avatar vs-partner-avatar-initials" style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: 20 }}>school</span>
+                              </div>
+                            ) : session.other.avatar ? (
+                              <img src={session.other.avatar} alt={session.other.name} className="vs-partner-avatar" />
+                            ) : (
+                              <div className="vs-partner-avatar vs-partner-avatar-initials">{session.other.initials}</div>
+                            )}
                             <div>
-                              <p className="vs-partner-name">{session.other.name}</p>
-                              <p className="vs-partner-role">{session.isHost ? 'You are hosting' : 'Hosted by partner'}</p>
+                              <p className="vs-partner-name">
+                                {session.isClassSession ? session.className : session.other.name}
+                                {session.isClassSession && (
+                                  <span className="tab-mentor-badge" style={{ fontSize: 10, padding: '2px 6px', marginLeft: 6 }}>
+                                    CLASS COHORT
+                                  </span>
+                                )}
+                              </p>
+                              <p className="vs-partner-role">
+                                {session.isClassSession
+                                  ? (session.isHost ? `You are hosting (Mentor • ${session.studentCount || 0} Enrolled)` : (session.other.role || 'Class Cohort Live Session'))
+                                  : (session.isHost ? 'You are hosting' : 'Hosted by partner')}
+                              </p>
                             </div>
                           </div>
                           <span className={`vs-status-chip ${isActive ? 'live' : sessionStatusColor(session.status)}`}>

@@ -263,24 +263,32 @@ export default function ChatPage() {
                     id={`conv-${conv.userId}`}
                   >
                     <div className="chat-conv-avatar-wrap">
-                      {conv.avatar
-                        ? <img src={conv.avatar} alt={conv.name} className="chat-conv-avatar" />
-                        : <div className="chat-conv-avatar chat-conv-avatar-initials">{conv.initials}</div>
-                      }
+                      {conv.isClass ? (
+                        <div className="chat-conv-avatar chat-conv-avatar-class" style={{ background: 'linear-gradient(135deg, #0043c8, #006b5c)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>school</span>
+                        </div>
+                      ) : conv.avatar ? (
+                        <img src={conv.avatar} alt={conv.name} className="chat-conv-avatar" />
+                      ) : (
+                        <div className="chat-conv-avatar chat-conv-avatar-initials">{conv.initials}</div>
+                      )}
                       <div className="chat-conv-online-dot" />
                     </div>
                     <div className="chat-conv-info">
                       <div className="chat-conv-top">
-                        <span className="chat-conv-name">{conv.name}</span>
+                        <span className="chat-conv-name">
+                          {conv.name}
+                        </span>
                         {conv.lastMessageAt && (
                           <span className="chat-conv-time">{formatTime(conv.lastMessageAt)}</span>
                         )}
                       </div>
                       <div className="chat-conv-bottom">
                         <span className="chat-conv-preview">
+                          {conv.isClass && <strong style={{ color: 'var(--primary)', marginRight: 4 }}>[Class]</strong>}
                           {conv.peerVote && !conv.myVote
                             ? '🔔 Finish Course Requested'
-                            : (conv.lastMessage || `Exchange: ${conv.fromSkill} ↔ ${conv.toSkill}`)}
+                            : (conv.lastMessage || (conv.isClass ? 'Class Cohort' : `Exchange: ${conv.fromSkill} ↔ ${conv.toSkill}`))}
                         </span>
                         {conv.unreadCount > 0 && (
                           <span className="chat-conv-unread">{conv.unreadCount}</span>
@@ -302,7 +310,7 @@ export default function ChatPage() {
                     <span className="material-symbols-outlined chat-pane-empty-icon">forum</span>
                   </div>
                   <h3 className="chat-pane-empty-title">Select a Conversation</h3>
-                  <p className="chat-pane-empty-sub">Choose an active peer connection to start messaging and learning</p>
+                  <p className="chat-pane-empty-sub">Choose a class cohort or active peer connection to start messaging</p>
                 </div>
               </div>
             ) : (
@@ -316,29 +324,64 @@ export default function ChatPage() {
                     <span className="material-symbols-outlined">arrow_back</span>
                   </button>
                   <div className="chat-pane-header-avatar-wrap">
-                    {activeConv?.avatar
-                      ? <img src={activeConv.avatar} alt={activeConv?.name} className="chat-pane-header-avatar" />
-                      : <div className="chat-pane-header-avatar chat-pane-header-avatar-initials">{activeConv?.initials}</div>
-                    }
+                    {activeConv?.isClass ? (
+                      <div className="chat-pane-header-avatar chat-pane-header-avatar-initials" style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 22 }}>school</span>
+                      </div>
+                    ) : activeConv?.avatar ? (
+                      <img src={activeConv.avatar} alt={activeConv?.name} className="chat-pane-header-avatar" />
+                    ) : (
+                      <div className="chat-pane-header-avatar chat-pane-header-avatar-initials">{activeConv?.initials}</div>
+                    )}
                     <div className="chat-pane-online-dot" />
                   </div>
                   <div className="chat-pane-header-info">
                     <span className="chat-pane-header-name">{activeConv?.name || '…'}</span>
-                    <span className="chat-pane-header-role">{activeConv?.role || 'Active Skill Partner'}</span>
+                    <span className="chat-pane-header-role">
+                      {activeConv?.isClass
+                        ? (activeConv?.role || 'Class Cohort')
+                        : (activeConv?.role || 'Active Skill Partner')}
+                    </span>
                   </div>
                   <div className="chat-pane-header-actions">
                     <button
                       className="chat-header-action-btn"
-                      title="Schedule Video Call"
-                      onClick={() => navigate(`/video-sessions?with=${activeUserId}`)}
+                      title={activeConv?.isClass ? 'Schedule Class Video Session' : 'Schedule Video Call'}
+                      onClick={() => {
+                        if (activeConv?.isClass) {
+                          navigate(`/video-sessions?class=${activeConv.classId}`);
+                        } else {
+                          navigate(`/video-sessions?with=${activeUserId}`);
+                        }
+                      }}
                     >
                       <span className="material-symbols-outlined">videocam</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Exchange info banner with Request to Finish trigger */}
-                {activeConv && (
+                {/* Exchange / Class info banner */}
+                {activeConv && activeConv.isClass ? (
+                  <div className="chat-exchange-banner" style={{ background: 'rgba(0, 67, 200, 0.08)', color: 'var(--primary)' }}>
+                    <div className="chat-banner-info">
+                      <span className="material-symbols-outlined chat-banner-icon" style={{ color: 'var(--primary)' }}>groups</span>
+                      <div className="chat-banner-text">
+                        <span>
+                          <strong>Class Cohort:</strong> {activeConv.name} · {activeConv.memberCount || 1} Members · {activeConv.skills?.join(', ') || 'All topics'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="chat-banner-actions">
+                      <button
+                        className="chat-banner-btn primary"
+                        onClick={() => navigate(`/video-sessions?class=${activeConv.classId}`)}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>videocam</span>
+                        Live Session
+                      </button>
+                    </div>
+                  </div>
+                ) : activeConv && (
                   <div className="chat-exchange-banner">
                     <div className="chat-banner-info">
                       <span className="material-symbols-outlined chat-banner-icon">swap_horiz</span>
@@ -394,10 +437,14 @@ export default function ChatPage() {
                   ) : messages.length === 0 ? (
                     <div className="chat-msgs-empty">
                       <div className="chat-msgs-empty-icon-wrap">
-                        <span className="material-symbols-outlined">waving_hand</span>
+                        <span className="material-symbols-outlined">{activeConv?.isClass ? 'school' : 'waving_hand'}</span>
                       </div>
-                      <p className="chat-msgs-empty-title">Say hello!</p>
-                      <p className="chat-msgs-empty-sub">Start your skill exchange conversation with {activeConv?.name}</p>
+                      <p className="chat-msgs-empty-title">{activeConv?.isClass ? 'Welcome to the Class Cohort!' : 'Say hello!'}</p>
+                      <p className="chat-msgs-empty-sub">
+                        {activeConv?.isClass
+                          ? `Start messaging with everyone enrolled in ${activeConv?.name}.`
+                          : `Start your skill exchange conversation with ${activeConv?.name}`}
+                      </p>
                     </div>
                   ) : (
                     Object.entries(groupedMessages).map(([date, msgs]) => (
@@ -408,7 +455,7 @@ export default function ChatPage() {
                         {msgs.map((msg) => {
                           const isMine = String(msg.from) === String(user._id) || String(msg.from?._id) === String(user._id);
 
-                          // Interactive Finish Request Card inside Chat
+                          // Interactive Finish Request Card inside Chat (only for peer exchanges)
                           if (msg.type === 'finish_request') {
                             return (
                               <div key={msg._id} className="chat-finish-request-wrapper">
@@ -468,15 +515,28 @@ export default function ChatPage() {
                             <div key={msg._id} className={`chat-msg-row ${isMine ? 'mine' : 'theirs'}`}>
                               {!isMine && (
                                 <div className="chat-msg-avatar">
-                                  {activeConv?.avatar
-                                    ? <img src={activeConv.avatar} alt={activeConv?.name} className="chat-msg-avatar-img" />
-                                    : <div className="chat-msg-avatar-initials">{activeConv?.initials}</div>
-                                  }
+                                  {msg.senderAvatar ? (
+                                    <img src={msg.senderAvatar} alt={msg.senderName || 'Member'} className="chat-msg-avatar-img" />
+                                  ) : (
+                                    <div className="chat-msg-avatar-initials">
+                                      {msg.senderInitials || (msg.senderName ? msg.senderName.slice(0, 2).toUpperCase() : (activeConv?.initials || 'U'))}
+                                    </div>
+                                  )}
                                 </div>
                               )}
-                              <div className={`chat-bubble ${isMine ? 'mine' : 'theirs'}`}>
-                                <p className="chat-bubble-text">{msg.text}</p>
-                                <span className="chat-bubble-time">{formatTime(msg.createdAt)}</span>
+                              <div className="chat-msg-content-wrap">
+                                {!isMine && activeConv?.isClass && (
+                                  <span className="chat-msg-sender-name">
+                                    <span>{msg.senderName || 'Member'}</span>
+                                    {msg.isMentorMsg && (
+                                      <span className="tab-mentor-badge" style={{ fontSize: 9, padding: '1px 5px' }}>👑 Mentor</span>
+                                    )}
+                                  </span>
+                                )}
+                                <div className={`chat-bubble ${isMine ? 'mine' : 'theirs'}`}>
+                                  <p className="chat-bubble-text">{msg.text}</p>
+                                  <span className="chat-bubble-time">{formatTime(msg.createdAt)}</span>
+                                </div>
                               </div>
                             </div>
                           );

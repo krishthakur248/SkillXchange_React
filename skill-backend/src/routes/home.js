@@ -23,66 +23,118 @@ router.get('/', protect, async (req, res) => {
       ...activeRequests.map((r) => String(r.from) === String(me._id) ? r.to : r.from),
     ];
 
-    // ── Match Cards: find other users whose learningSkills match my teachingSkills (excluding already connected)
-    const myTeachNames = me.teachingSkills.map((s) => s.name);
-    const myLearnNames = me.learningSkills.map((s) => s.name);
+    const MentorClass = require('../models/MentorClass');
+    const Message     = require('../models/Message');
 
-    let matchUsers = await User.find({
-      _id: { $nin: excludedIds },
-      $or: [
-        { 'learningSkills.name': { $in: myTeachNames } },
-        { 'teachingSkills.name': { $in: myLearnNames } },
-      ],
-    })
-      .select('name role initials teachingSkills learningSkills avatar rating')
-      .limit(4);
+    // ── Mentor vs Normal User Logic ──
+    let mentorClasses = [];
+    let matchCards = [];
 
-    if (matchUsers.length === 0) {
-      matchUsers = await User.find({ _id: { $nin: excludedIds } })
+    if (me.userRole === 'mentor') {
+      mentorClasses = await MentorClass.find({ mentorId: me._id }).sort({ createdAt: -1 });
+    } else {
+      // Normal user: Match Cards (P2P reciprocal matches)
+      const myTeachNames = me.teachingSkills.map((s) => s.name);
+      const myLearnNames = me.learningSkills.map((s) => s.name);
+
+      let matchUsers = await User.find({
+        _id: { $nin: excludedIds },
+        userRole: { $ne: 'mentor' }, // Do not show mentors in P2P swap cards
+        $or: [
+          { 'learningSkills.name': { $in: myTeachNames } },
+          { 'teachingSkills.name': { $in: myLearnNames } },
+        ],
+      })
         .select('name role initials teachingSkills learningSkills avatar rating')
         .limit(4);
+
+      if (matchUsers.length === 0) {
+        matchUsers = await User.find({ _id: { $nin: excludedIds }, userRole: { $ne: 'mentor' } })
+          .select('name role initials teachingSkills learningSkills avatar rating')
+          .limit(4);
+      }
+
+      matchCards = matchUsers.map((u) => ({
+        _id:      u._id,
+        name:     u.name,
+        role:     u.role,
+        initials: u.initials,
+        avatar:   u.avatar || '',
+        accent:   'primary',
+        teaches:  u.teachingSkills[0]?.name || '—',
+        wants:    u.learningSkills[0]?.name  || '—',
+      }));
     }
 
-    const matchCards = matchUsers.map((u) => ({
-      _id:      u._id,
-      name:     u.name,
-      role:     u.role,
-      initials: u.initials,
-      avatar:   u.avatar || '',
-      accent:   'primary',
-      teaches:  u.teachingSkills[0]?.name || '—',
-      wants:    u.learningSkills[0]?.name  || '—',
-    }));
+    // ── Active Conversations: recent class cohort chats and accepted requests ──
+    const userClasses = await MentorClass.find({
+      $or: [
+        { mentorId: me._id },
+        { enrolledStudents: me._id },
+      ],
+      status: 'active',
+    }).sort({ updatedAt: -1 }).limit(4);
 
-    // ── Active Conversations: recent accepted requests
-    const acceptedRequests = await SkillExchangeRequest.find({
-      $or: [{ from: me._id }, { to: me._id }],
-      status: 'accepted',
-    })
-      .populate('from', 'name initials avatar')
-      .populate('to',   'name initials avatar')
-      .sort({ updatedAt: -1 })
-      .limit(3);
-
-    const chats = acceptedRequests.map((r) => {
-      const peer = String(r.from._id) === String(me._id) ? r.to : r.from;
-      const minsAgo = Math.floor((Date.now() - r.updatedAt) / 60000);
+    const classChats = await Promise.all(userClasses.map(async (cls) => {
+      const lastMsg = await Message.findOne({ classId: cls._id }).sort({ createdAt: -1 });
+      const minsAgo = Math.floor((Date.now() - (lastMsg ? lastMsg.createdAt : cls.updatedAt)) / 60000);
       const timeStr = minsAgo < 60
         ? `${minsAgo}m ago`
         : minsAgo < 1440
           ? `${Math.floor(minsAgo / 60)}h ago`
           : `${Math.floor(minsAgo / 1440)}d ago`;
+
       return {
-        _id:      r._id,
-        peerId:   peer._id,
-        name:     peer.name,
-        initials: peer.initials,
-        avatar:   peer.avatar || '',
+        _id:      cls._id,
+        peerId:   `class_${cls._id}`,
+        name:     cls.title,
+        initials: cls.title.slice(0, 2).toUpperCase(),
+        avatar:   '',
         time:     timeStr,
-        preview:  `Exchange: ${r.fromSkill} ↔ ${r.toSkill}`,
+        preview:  lastMsg ? `[Cohort] ${lastMsg.text}` : `Class Cohort • ${cls.enrolledStudents?.length || 0} students`,
         active:   minsAgo < 60,
+        isClass:  true,
       };
-    });
+    }));
+
+    let chats = [];
+    if (me.userRole === 'mentor') {
+      // Mentors only converse inside their Class Cohort group chats
+      chats = classChats;
+    } else {
+      // Normal users have P2P skill exchanges as well as their enrolled mentor classes
+      const acceptedRequests = await SkillExchangeRequest.find({
+        $or: [{ from: me._id }, { to: me._id }],
+        status: 'accepted',
+      })
+        .populate('from', 'name initials avatar')
+        .populate('to',   'name initials avatar')
+        .sort({ updatedAt: -1 })
+        .limit(3);
+
+      const p2pChats = acceptedRequests.map((r) => {
+        const peer = String(r.from._id) === String(me._id) ? r.to : r.from;
+        const minsAgo = Math.floor((Date.now() - r.updatedAt) / 60000);
+        const timeStr = minsAgo < 60
+          ? `${minsAgo}m ago`
+          : minsAgo < 1440
+            ? `${Math.floor(minsAgo / 60)}h ago`
+            : `${Math.floor(minsAgo / 1440)}d ago`;
+        return {
+          _id:      r._id,
+          peerId:   peer._id,
+          name:     peer.name,
+          initials: peer.initials,
+          avatar:   peer.avatar || '',
+          time:     timeStr,
+          preview:  `Exchange: ${r.fromSkill} ↔ ${r.toSkill}`,
+          active:   minsAgo < 60,
+          isClass:  false,
+        };
+      });
+
+      chats = [...classChats, ...p2pChats].slice(0, 4);
+    }
 
     // ── Community Spotlight (Guaranteed rich fallback if DB entry missing) ──
     let spotlight = await CommunitySpotlight.findOne().sort({ updatedAt: -1 });
@@ -141,6 +193,7 @@ router.get('/', protect, async (req, res) => {
     res.json({
       user:           { name: me.name, initials: me.initials, badge: me.badge },
       matchCards,
+      mentorClasses,
       skills:         formattedSkills,
       stats,
       dailyProgress,
