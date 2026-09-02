@@ -15,7 +15,7 @@ const server = http.createServer(app);
 // ── Socket.IO setup ──
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+    origin: (origin, callback) => callback(null, true),
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -26,9 +26,12 @@ registerVideoSignaling(io);
 
 // ── Middleware ──
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => callback(null, true),
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+app.options('*', cors());
 app.use(express.json());
 
 // ── Routes ──

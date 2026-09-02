@@ -180,7 +180,7 @@ export function useVideoCall({ sessionId, token, enabled = false }) {
     }
 
     const socket = io(API_BASE_URL, {
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       auth: { token },
       reconnection: true,
       reconnectionAttempts: 5,
