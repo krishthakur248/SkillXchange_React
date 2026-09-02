@@ -31,7 +31,7 @@ router.get('/', protect, async (req, res) => {
     let matchCards = [];
 
     if (me.userRole === 'mentor') {
-      mentorClasses = await MentorClass.find({ mentorId: me._id }).sort({ createdAt: -1 });
+      mentorClasses = await MentorClass.find({ mentorId: me._id, status: 'active' }).sort({ createdAt: -1 });
     } else {
       // Normal user: Match Cards (P2P reciprocal matches)
       const myTeachNames = me.teachingSkills.map((s) => s.name);

@@ -281,13 +281,13 @@ export default function HomePage() {
               <div className="match-cards-scroll" ref={cardsRef}>
                 {loading ? (
                   [1, 2, 3].map((k) => <SkeletonCard key={k} />)
-                ) : (data?.mentorClasses || []).length === 0 ? (
+                ) : (data?.mentorClasses || []).filter((c) => !c.status || c.status === 'active').length === 0 ? (
                   <div style={{ padding: '24px 16px', background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--outline-variant)', width: '100%' }}>
                     <p style={{ fontWeight: 700, fontSize: 15, color: 'var(--on-surface)', marginBottom: 4 }}>
-                      No mentor classes created yet
+                      No active mentor classes
                     </p>
                     <p style={{ color: 'var(--on-surface-variant)', fontSize: 13, marginBottom: 14 }}>
-                      Create your first cohort-based class in the Mentor Dashboard to start teaching students.
+                      Create or activate a cohort-based class in the Mentor Dashboard to start teaching students.
                     </p>
                     <button
                       className="match-btn"
@@ -299,7 +299,7 @@ export default function HomePage() {
                     </button>
                   </div>
                 ) : (
-                  (data?.mentorClasses || []).map((cls) => (
+                  (data?.mentorClasses || []).filter((c) => !c.status || c.status === 'active').map((cls) => (
                     <div key={cls._id} className="match-card border-accent-blue" style={{ minWidth: 280 }}>
                       <div className="match-card-header">
                         <div className="match-avatar" style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}>
