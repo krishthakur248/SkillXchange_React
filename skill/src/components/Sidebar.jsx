@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
 
@@ -11,6 +11,7 @@ const navItems = [
   { to: '/video-sessions', icon: 'videocam',        label: 'Video Sessions' },
   { to: '/profile',        icon: 'person_edit',     label: 'Profile' },
 ];
+
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -64,11 +65,11 @@ export default function Sidebar() {
 
       {/* Bottom */}
       <div className="sidebar-bottom">
-        <button type="button" className="sidebar-link">
+        <Link to="/profile" className="sidebar-link sidebar-bottom-link">
           <span className="material-symbols-outlined">settings</span>
           <span>Settings</span>
-        </button>
-        <button type="button" className="sidebar-link">
+        </Link>
+        <button type="button" className="sidebar-link" onClick={() => window.open('mailto:support@skillxchange.io')}>
           <span className="material-symbols-outlined">help</span>
           <span>Support</span>
         </button>

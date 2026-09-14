@@ -363,10 +363,28 @@ export default function ProfilePage() {
     }
   };
 
+  const handleToggleAvailable = async () => {
+    const nextVal = !available;
+    setAvailable(nextVal);
+    await saveSettings({ availableForExchange: nextVal });
+    showToast(
+      nextVal
+        ? 'Status updated: Available for Exchange 🟢'
+        : 'Status updated: Offline / Not available for exchange ⚪',
+      'success'
+    );
+  };
+
   const handleAvailableChange = (e) => {
     const val = e.target.checked;
     setAvailable(val);
     saveSettings({ availableForExchange: val });
+    showToast(
+      val
+        ? 'Status updated: Available for Exchange 🟢'
+        : 'Status updated: Offline / Not available for exchange ⚪',
+      'success'
+    );
   };
 
   const handleTimezoneChange = (e) => {
@@ -497,6 +515,17 @@ export default function ProfilePage() {
                   <span className={`profile-badge ${displayUser?.userRole === 'mentor' ? 'badge-mentor' : ''}`}>
                     {displayUser?.userRole === 'mentor' ? 'MENTOR' : (displayUser?.badge || 'LEARNER')}
                   </span>
+                  <button
+                    id="profile-available-btn"
+                    type="button"
+                    className={`profile-availability-badge ${available ? 'is-available' : 'is-unavailable'}`}
+                    onClick={handleToggleAvailable}
+                    title="Click to toggle your exchange availability"
+                    disabled={saving}
+                  >
+                    <span className="availability-dot" />
+                    <span>{available ? 'Available for Exchange' : 'Not Available'}</span>
+                  </button>
                 </div>
                 <p className="profile-bio">
                   {displayUser?.bio || 'No bio yet. Update your profile to tell others what you\'re about.'}

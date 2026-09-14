@@ -152,12 +152,16 @@
   margin-top: var(--space-xs);
 }
 
-.sidebar-bottom .sidebar-link {
-  background: #fff;
+.sidebar-bottom .sidebar-link,
+.sidebar-bottom .sidebar-bottom-link {
+  color: var(--on-surface-variant);
+  background: transparent;
 }
 
-.sidebar-bottom .sidebar-link:hover {
-  background: #f7f9ff;
+.sidebar-bottom .sidebar-link:hover,
+.sidebar-bottom .sidebar-bottom-link:hover {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
 }
 
 .sidebar-cta {
